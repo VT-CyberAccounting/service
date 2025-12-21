@@ -25,8 +25,8 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-            type=sha,prefix=,format=long
+            type=sha, format=short, prefix=
+            type=raw, value=latest, enable=${{ github.ref == 'refs/heads/main' }}
 
       - name: Build Push
         uses: docker/build-push-action@v5
