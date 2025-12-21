@@ -12,9 +12,9 @@ def startup():
         transport=ThrottledTransport(
             delay=0.5
         ),
-	    headers={
-		    'User-Agent': 'CyberAccounting samartha@vt.edu'
-	    }
+        headers={
+            'User-Agent': 'CyberAccounting samartha@vt.edu'
+        }
     )
 
 def close():
@@ -24,25 +24,25 @@ def close():
 @get("/data")
 async def data(
         ciks: List[str] = Parameter(
-			required=False,
-			description="cik associated with company",
-			default=None
-		)
+            required=True,
+            description="cik associated with company",
+            default=None
+        )
 ) -> Dict[str, Dict[str, int]]:
-	global client
-	res = {}
-	for cik in ciks:
-		comp = (await client.get(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik.zfill(10)}.json")).json()
-		res[cik] = {
-			"revenue": comp['facts']['us-gaap']['Revenues']['units']['USD'][-1]["val"],
-			"expense": comp['facts']['us-gaap']['OperatingExpenses']['units']['USD'][-1]["val"],
-			"tax": comp['facts']['us-gaap']['IncomeTaxExpenseBenefit']['units']['USD'][-1]["val"]
-		}
-	return res
+    global client
+    res = {}
+    for cik in ciks:
+        comp = (await client.get(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik.zfill(10)}.json")).json()
+        res[cik] = {
+            "revenue": comp['facts']['us-gaap']['Revenues']['units']['USD'][-1]["val"],
+            "expense": comp['facts']['us-gaap']['OperatingExpenses']['units']['USD'][-1]["val"],
+            "tax": comp['facts']['us-gaap']['IncomeTaxExpenseBenefit']['units']['USD'][-1]["val"]
+        }
+    return res
 
 app = Litestar(
     route_handlers=[data],
     on_startup=[startup],
     on_shutdown=[close],
-	debug=True
+    debug=True
 )
