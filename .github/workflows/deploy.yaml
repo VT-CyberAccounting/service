@@ -1,5 +1,8 @@
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - 'helm'
 jobs:
   deploy:
     runs-on: ubuntu-latest
