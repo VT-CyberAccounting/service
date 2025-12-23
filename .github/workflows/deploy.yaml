@@ -25,5 +25,5 @@ jobs:
       - name: deploy
         run: |
           helm upgrade --install service ./helm \
-            --namespace dev --create-namespace \
+            --namespace dev \
             --wait
