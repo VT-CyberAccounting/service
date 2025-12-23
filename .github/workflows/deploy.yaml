@@ -20,6 +20,8 @@ jobs:
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets.KUBECONFIG }}
+      - name: namespace
+        run: kubectl apply -f ./helm/templates/namespace.yaml
       - name: deploy
         run: |
           helm upgrade --install service ./helm \
