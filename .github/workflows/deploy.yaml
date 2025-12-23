@@ -17,6 +17,7 @@ jobs:
       - name: tag check
         run: |
           GIT_SHA="$(echo ${{ github.sha }} | cut -c1-7)"
+          echo "$GIT_SHA"
           INP_SHA="${{ github.sha }}"
           echo "TAG=${INP_SHA:-$GIT_SHA}" >> $GITHUB_ENV
 
