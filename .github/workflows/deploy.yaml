@@ -1,5 +1,10 @@
 on:
   workflow_dispatch:
+    inputs:
+      commit:
+        type: string
+        required: false
+        description: 'Short SHA of commit to be deployed'
   push:
     branches:
       - 'helm'
@@ -9,8 +14,16 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: tag check
+        run: |
+          GIT_SHA="$(echo ${{ github.sha }} | cut -c1-7)"
+          INP_SHA="${{ github.sha }}"
+          echo "TAG=${INP_SHA:-$GIT_SHA}" >> $GITHUB_ENV
+
       - name: checkout
         uses: actions/checkout@v5
+        with:
+          ref: ${{ env.TAG }}
       - name: kubectl
         uses: azure/setup-kubectl@v3
       - name: helm
@@ -24,4 +37,5 @@ jobs:
         run: |
           helm upgrade --install service ./helm \
             --namespace dev \
+            --set image.tag=${{ env.TAG }}
             --wait
