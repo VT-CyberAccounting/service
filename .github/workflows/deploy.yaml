@@ -23,5 +23,5 @@ jobs:
       - name: deploy
         run: |
           helm upgrade --install service ./helm \
-            --namespace cyberacc --create-namespace \
+            --namespace dev --create-namespace \
             --wait
