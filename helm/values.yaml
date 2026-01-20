@@ -3,5 +3,8 @@ image:
   repository: ghcr.io/vt-cyberaccounting/service
   pullPolicy: Always
   tag: "latest"
+ingress:
+  enabled: true
+  host: "cyberacc.discovery.cs.vt.edu"
 nameOverride: ""
 fullnameOverride: ""
