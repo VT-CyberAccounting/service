@@ -9,9 +9,6 @@ on:
         type: string
         required: false
         description: 'full sha of commit containing target helm configuration'
-  push:
-    branches:
-      - 'helm'
 jobs:
   deploy:
     runs-on: ubuntu-latest
