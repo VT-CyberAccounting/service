@@ -1,0 +1,42 @@
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        type: string
+        required: false
+        description: 'tag of image to be deployed'
+      helm:
+        type: string
+        required: false
+        description: 'full sha of commit containing target helm configuration'
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: tag check
+        run: |
+          GIT_SHA="$(echo ${{ github.sha }} | cut -c1-7)"
+          INP_SHA="${{ inputs.image }}"
+          echo "TAG=${INP_SHA:-$GIT_SHA}" >> $GITHUB_ENV
+
+      - name: checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.helm || github.sha }}
+      - name: kubectl
+        uses: azure/setup-kubectl@v3
+      - name: helm
+        uses: azure/setup-helm@v3
+      - name: kubeconfig
+        uses: azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+      - name: deploy
+        run: |
+          helm upgrade --install service ./helm \
+            --namespace dev \
+            --set-string image.tag=${{ env.TAG }} \
+            --wait
