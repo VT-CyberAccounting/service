@@ -27,7 +27,7 @@ spec:
                 key: password
         volumeMounts:
         - name: vol
-          mountPath: /var/lib/postgresql/data
+          mountPath: /var/lib/postgresql/data/pgdata
   volumeClaimTemplates:
   - metadata:
       name: vol
