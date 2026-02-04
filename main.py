@@ -9,7 +9,7 @@ client: AsyncConnection
 async def startup():
     global client
     client = await AsyncConnection.connect(
-        conninfo=f"postgresql://postgres:{getenv('POSTGRES_PASSWORD')}@db:5432/postgres"
+        conninfo=f"postgresql://postgres:{getenv('POSTGRES_PASSWORD')}@db:80/postgres"
     )
 
 async def close():
