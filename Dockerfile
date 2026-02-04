@@ -2,6 +2,8 @@ FROM python:3.12-alpine
 
 LABEL authors="Samartha Madhyastha"
 
+RUN apk add libpq
+
 RUN mkdir /app
 
 COPY . /app

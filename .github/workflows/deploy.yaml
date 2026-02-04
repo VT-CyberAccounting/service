@@ -40,4 +40,6 @@ jobs:
           helm upgrade --install service ./helm \
             --namespace dev \
             --set-string image.tag=${{ env.TAG }} \
+            --timeout 2m0s \
+            --atomic \
             --wait
