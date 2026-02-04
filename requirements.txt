@@ -2,4 +2,4 @@ litestar
 sniffio
 uvicorn
 httpx
-beanie
+psycopg[binary]
