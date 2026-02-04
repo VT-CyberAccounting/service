@@ -14,18 +14,18 @@ spec:
       labels:
         app: {{ .Release.Name }}
     spec:
-      initContainers:
-        - name: db-check
-          image: postgres:16.11-alpine
-          command:
-            - sh
-            - -c
-            - |
-              echo "waiting for database..."
-              until pg_isready -h db -p 5432; do
-                sleep 3;
-              done;
-              echo "database initialized"
+{{/*      initContainers:*/}}
+{{/*        - name: db-check*/}}
+{{/*          image: postgres:16.11-alpine*/}}
+{{/*          command:*/}}
+{{/*            - sh*/}}
+{{/*            - -c*/}}
+{{/*            - |*/}}
+{{/*              echo "waiting for database..."*/}}
+{{/*              until pg_isready -h db -p 5432; do*/}}
+{{/*                sleep 3;*/}}
+{{/*              done;*/}}
+{{/*              echo "database initialized"*/}}
       containers:
         - name: {{ .Release.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
