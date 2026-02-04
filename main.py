@@ -1,25 +1,20 @@
 from litestar import Litestar, get
-from httpx import AsyncClient
 from typing import *
 from litestar.params import Parameter
-from lib.net import ThrottledTransport
+from psycopg import AsyncConnection
+from os import getenv
 
-client: AsyncClient
+client: AsyncConnection
 
-def startup():
+async def startup():
     global client
-    client = AsyncClient(
-        transport=ThrottledTransport(
-            delay=0.5
-        ),
-        headers={
-            'User-Agent': 'CyberAccounting samartha@vt.edu'
-        }
+    client = await AsyncConnection.connect(
+        conninfo=f"postgresql://postgres:{getenv('POSTGRES_PASSWORD')}@db:5432/postgres"
     )
 
-def close():
+async def close():
     global client
-    client.aclose()
+    await client.close()
 
 @get("/data")
 async def data(
@@ -32,11 +27,13 @@ async def data(
     global client
     res = {}
     for cik in ciks:
-        comp = (await client.get(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik.zfill(10)}.json")).json()
+        cursor = client.cursor()
+        await cursor.execute("SELECT revenues, operatingexpenses, incometaxexpensebenefit FROM data WHERE cik = %s", (cik,))
+        comp = await cursor.fetchone()
         res[cik] = {
-            "revenue": comp['facts']['us-gaap']['Revenues']['units']['USD'][-1]["val"],
-            "expense": comp['facts']['us-gaap']['OperatingExpenses']['units']['USD'][-1]["val"],
-            "tax": comp['facts']['us-gaap']['IncomeTaxExpenseBenefit']['units']['USD'][-1]["val"]
+            "revenue": comp[0],
+            "expense": comp[1],
+            "tax": comp[2]
         }
     return res
 
