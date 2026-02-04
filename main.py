@@ -1,7 +1,9 @@
 from litestar import Litestar, get
 from typing import *
+
+from litestar.exceptions import HTTPException
 from litestar.params import Parameter
-from psycopg import AsyncConnection
+from psycopg import AsyncConnection, Error
 from os import getenv
 
 client: AsyncConnection
@@ -26,9 +28,13 @@ async def data(
 ) -> Dict[str, Dict[str, int]]:
     global client
     res = {}
+    cursor = client.cursor()
     for cik in ciks:
-        cursor = client.cursor()
-        await cursor.execute("SELECT revenues, operatingexpenses, incometaxexpensebenefit FROM data WHERE cik = %s", (cik,))
+        try:
+            await cursor.execute("SELECT revenues, operatingexpenses, incometaxexpensebenefit FROM data WHERE cik = %s", (cik,))
+        except Error as e:
+            await client.rollback()
+            raise HTTPException(status_code=400, detail=str(e))
         comp = await cursor.fetchone()
         res[cik] = {
             "revenue": comp[0],
