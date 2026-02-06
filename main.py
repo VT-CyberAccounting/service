@@ -31,7 +31,7 @@ async def data(
     cursor = client.cursor()
     for cik in ciks:
         try:
-            await cursor.execute("SELECT revenues, costs, eps FROM financials WHERE cik = %s", (cik,))
+            await cursor.execute("SELECT revenues, costs, eps FROM financials WHERE cik = %s", (cik.zfill(10),))
         except Error as e:
             await client.rollback()
             raise HTTPException(status_code=400, detail=str(e))
