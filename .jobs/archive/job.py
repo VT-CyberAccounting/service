@@ -14,7 +14,7 @@ client = httpx.Client(
 )
 
 pgclient = psycopg.connect(
-	f"dbname=postgres user=postgres password={getenv("POSTGRES_PASSWORD")} host=db"
+	f"postgresql://postgres:{getenv('POSTGRES_PASSWORD')}@db:80/postgres"
 )
 
 for url in urls:
