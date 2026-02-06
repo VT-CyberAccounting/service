@@ -6,5 +6,10 @@ image:
 ingress:
   enabled: true
   host: "cyberacc.discovery.cs.vt.edu"
+archiveJob:
+  schedule: "0 */3 * * *"
+  repository: ghcr.io/vt-cyberaccounting/job
+  pullPolicy: Always
+  tag: "latest"
 nameOverride: ""
 fullnameOverride: ""
