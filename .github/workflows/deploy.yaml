@@ -41,7 +41,7 @@ jobs:
       - name: teardown
         if: ${{ inputs.teardown }}
         run: |
-          helm uninstall service
+          helm uninstall service --namespace dev
       - name: deploy
         run: |
           helm upgrade --install service ./helm \
