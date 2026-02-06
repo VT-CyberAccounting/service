@@ -89,7 +89,7 @@ for url in urls:
 				cur.executemany(
 					"""
 					INSERT INTO financials (accn, cik, name, fy, fp, costs, eps, revenues)
-					VALUES (%s, %s, %s, %s, %s, %s, %s)
+					VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
 					ON CONFLICT (adsh) DO UPDATE SET
 						revenues = EXCLUDED.revenues,
 						costs = EXCLUDED.costs,
