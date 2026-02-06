@@ -50,6 +50,8 @@ for url in urls:
 				["adsh", "cik", "name", "fy", "fp"]
 			]
 
+			sub['cik'] = sub['cik'].str.zfill(10)
+
 			num = num[
 				num['adsh'].isin(sub['adsh'])
 			][
