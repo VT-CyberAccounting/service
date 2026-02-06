@@ -15,4 +15,10 @@ spec:
             - name: archive
               image: {{ .Values.archiveJob.repository }}:{{ .Values.archiveJob.tag }}
               imagePullPolicy: Always
+              env:
+                - name: POSTGRES_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres
+                      key: password
           restartPolicy: OnFailure
