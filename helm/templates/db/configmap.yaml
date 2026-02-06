@@ -10,7 +10,7 @@ data:
         name VARCHAR(255) NOT NULL,
         revenues BIGINT,
         expenses BIGINT,
-        tax BIGINT,
+        tax BIGINT
     );
     CREATE INDEX IF NOT EXISTS idx_cik ON financials(cik);
     CREATE INDEX IF NOT EXISTS idx_name ON financials(name);
