@@ -90,7 +90,7 @@ for url in urls:
 					"""
 					INSERT INTO financials (accn, cik, name, fy, fp, costs, eps, revenues)
 					VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-					ON CONFLICT (adsh) DO UPDATE SET
+					ON CONFLICT (accn) DO UPDATE SET
 						revenues = EXCLUDED.revenues,
 						costs = EXCLUDED.costs,
 						eps = EXCLUDED.eps;
