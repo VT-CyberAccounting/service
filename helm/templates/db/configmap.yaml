@@ -8,9 +8,11 @@ data:
         accn VARCHAR(255) PRIMARY KEY,
         cik INTEGER NOT NULL,
         name VARCHAR(255) NOT NULL,
-        revenues BIGINT,
-        expenses BIGINT,
-        tax BIGINT
+        fy INTEGER,
+        fp VARCHAR(2),
+        costs BIGINT,
+        eps NUMERIC,
+        revenues BIGINT
     );
     CREATE INDEX IF NOT EXISTS idx_cik ON financials(cik);
     CREATE INDEX IF NOT EXISTS idx_name ON financials(name);

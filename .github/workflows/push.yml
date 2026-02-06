@@ -18,7 +18,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Docker Meta
+      - name: Docker Meta (app)
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -27,10 +27,27 @@ jobs:
             type=sha, format=short, prefix=
             type=raw, value=latest, enable=${{ github.ref == 'refs/heads/main' }}
 
-      - name: Build Push
+      - name: Build Push (app)
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Docker Meta (job)
+        id: meta-job
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/job
+          tags: |
+            type=sha, format=short, prefix=
+            type=raw, value=latest
+
+      - name: Build Push (job)
+        uses: docker/build-push-action@v5
+        with:
+          context: .jobs/archive
+          push: true
+          tags: ${{ steps.meta-job.outputs.tags }}
+          labels: ${{ steps.meta-job.outputs.labels }}
