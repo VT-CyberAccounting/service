@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: archive-load
+data:
+  urls.txt: |
+
