@@ -9,7 +9,10 @@ on:
       helm:
         type: string
         required: false
-        description: 'full sha of commit containing target helm configuration'
+        description: 'helm config commit sha (full)'
+      teardown:
+        type: boolean
+        description: 'teardown (db cleared)'
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -20,7 +23,7 @@ jobs:
         run: |
           GIT_SHA="$(echo ${{ github.sha }} | cut -c1-7)"
           INP_SHA="${{ inputs.image }}"
-          echo "TAG=${INP_SHA:-$GIT_SHA}" >> $GITHUB_ENV
+          echo "TAG=${INP_SHA:-$GIT_SHA}" >> $GITHUB_ENV         
 
       - name: checkout
         uses: actions/checkout@v5
@@ -35,6 +38,11 @@ jobs:
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets.KUBECONFIG }}
+      - name: teardown
+        if: ${{ inputs.teardown }}
+        run: |
+          helm uninstall service --namespace dev
+          kubectl delete pvc vol-db-0 --namespace dev --ignore-not-found
       - name: deploy
         run: |
           helm upgrade --install service ./helm \
@@ -42,4 +50,4 @@ jobs:
             --set-string image.tag=${{ env.TAG }} \
             --timeout 2m0s \
             --atomic \
-            --wait
+            --wait \
