@@ -3,5 +3,4 @@ kind: ConfigMap
 metadata:
   name: archive-load
 data:
-  urls.txt: |
-
+  urls.txt: {{ .Files.Get "files/urls.txt" | quote }}

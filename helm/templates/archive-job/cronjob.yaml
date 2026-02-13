@@ -21,4 +21,13 @@ spec:
                     secretKeyRef:
                       name: postgres
                       key: password
+              volumeMounts:
+                - name: urls
+                  mountPath: /app/config
+
+          volumes:
+            - name: urls
+              configMap:
+                name: archive-load
+                defaultMode: 0755
           restartPolicy: OnFailure

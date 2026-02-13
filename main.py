@@ -24,6 +24,16 @@ async def data(
             required=True,
             description="cik associated with company",
             default=None
+        ),
+        fy: str = Parameter(
+            required=True,
+            description="financial year",
+            default=None
+        ),
+        fp: str = Parameter(
+            required=True,
+            description="fiscal period",
+            default=None
         )
 ) -> Dict[str, Dict[str, int]]:
     global client
@@ -31,7 +41,7 @@ async def data(
     cursor = client.cursor()
     for cik in ciks:
         try:
-            await cursor.execute("SELECT revenues, costs, eps FROM financials WHERE cik = %s", (cik.zfill(10),))
+            await cursor.execute("SELECT revenues, costs, eps, taxes FROM financials WHERE cik = %s AND fy = %s AND fp = %s", (cik.zfill(10), fy, fp))
         except Error as e:
             await client.rollback()
             raise HTTPException(status_code=400, detail=str(e))
@@ -39,7 +49,8 @@ async def data(
         res[cik] = {
             "revenue": comp[0],
             "expense": comp[1],
-            "tax": comp[2]
+            "eps": comp[2],
+            "taxes": comp[3],
         }
     return res
 

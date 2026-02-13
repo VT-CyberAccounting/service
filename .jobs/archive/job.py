@@ -3,9 +3,8 @@ import zipfile, httpx, io
 import psycopg
 from os import getenv
 
-urls = [
-	"https://www.sec.gov/files/dera/data/financial-statement-data-sets-archive/2024q4-archive.zip"
-]
+with open("/app/config/urls.txt") as f:
+	urls = [line.strip() for line in f if line.strip()]
 
 client = httpx.Client(
 	headers={
@@ -61,7 +60,8 @@ for url in urls:
 					[
 						'Revenues',
 					    'CostsAndExpenses',
-					    'EarningsPerShareBasic'
+					    'EarningsPerShareBasic',
+						'IncomeTaxExpenseBenefit'
 					]
 				)
 			].pivot_table(
@@ -82,6 +82,7 @@ for url in urls:
 					"EarningsPerShareBasic": "eps",
 					"CostsAndExpenses": "costs",
 					"Revenues": "revenues",
+					"IncomeTaxExpenseBenefit": "taxes"
 				}
 			).dropna(
 				subset=["costs", "revenues", "eps"],
@@ -90,12 +91,13 @@ for url in urls:
 			with pgclient.cursor() as cur:
 				cur.executemany(
 					"""
-					INSERT INTO financials (accn, cik, name, fy, fp, costs, eps, revenues)
-					VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+					INSERT INTO financials (accn, cik, name, fy, fp, costs, eps, revenues, taxes)
+					VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
 					ON CONFLICT (accn) DO UPDATE SET
 						revenues = EXCLUDED.revenues,
 						costs = EXCLUDED.costs,
-						eps = EXCLUDED.eps;
+						eps = EXCLUDED.eps,
+						taxes = EXCLUDED.taxes;
 					""",
 					batch
 				)

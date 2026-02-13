@@ -11,8 +11,9 @@ data:
         fy INTEGER,
         fp VARCHAR(2),
         costs BIGINT,
-        eps NUMERIC,
-        revenues BIGINT
+        eps FLOAT,
+        revenues BIGINT,
+        taxes BIGINT
     );
     CREATE INDEX IF NOT EXISTS idx_cik ON financials(cik);
     CREATE INDEX IF NOT EXISTS idx_name ON financials(name);
