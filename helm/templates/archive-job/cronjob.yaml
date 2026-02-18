@@ -30,4 +30,4 @@ spec:
               configMap:
                 name: archive-load
                 defaultMode: 0755
-          restartPolicy: OnFailure
+          restartPolicy: Never

@@ -4,6 +4,7 @@ metadata:
   name: db-init
 data:
   init.sql: |
+    CREATE EXTENSION IF NOT EXISTS pg_trgm;
     CREATE TABLE IF NOT EXISTS financials (
         accn VARCHAR(255) PRIMARY KEY,
         cik VARCHAR(10) NOT NULL,
@@ -16,4 +17,4 @@ data:
         taxes NUMERIC
     );
     CREATE INDEX IF NOT EXISTS idx_cik ON financials(cik);
-    CREATE INDEX IF NOT EXISTS idx_name ON financials(name);
+    CREATE INDEX IF NOT EXISTS idx_name ON financials(name) USING gin (name gin_trgm_ops);;

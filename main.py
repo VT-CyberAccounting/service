@@ -41,17 +41,37 @@ async def data(
     cursor = client.cursor()
     for cik in ciks:
         try:
-            await cursor.execute("SELECT revenues, costs, eps, taxes FROM financials WHERE cik = %s AND fy = %s AND fp = %s", (cik.zfill(10), fy, fp))
+            await cursor.execute("SELECT name, revenues, costs, eps, taxes FROM financials WHERE cik = %s AND fy = %s AND fp = %s", (cik.zfill(10), fy, fp))
         except Error as e:
             await client.rollback()
+            await cursor.close()
             raise HTTPException(status_code=400, detail=str(e))
         comp = await cursor.fetchone()
+        if not comp:
+            continue
         res[cik] = {
-            "revenue": comp[0],
-            "expense": comp[1],
-            "eps": comp[2],
-            "taxes": comp[3],
+            "name": comp[0],
+            "revenue": comp[1],
+            "expense": comp[2],
+            "eps": comp[3],
+            "taxes": comp[4],
         }
+    return res
+
+@get("/cik")
+async def cik(
+        name: str = Parameter(
+            required=True,
+            description="Name of the company",
+            default=None
+        )
+) -> List[str]:
+    global client
+    cursor = client.cursor()
+    await cursor.execute("SELECT cik FROM financials WHERE %s <% name", (name,))
+    res = await cursor.fetchall()
+    if not res:
+        raise HTTPException(status_code=404, detail="Company not found")
     return res
 
 app = Litestar(
