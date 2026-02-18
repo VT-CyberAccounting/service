@@ -68,7 +68,7 @@ async def cik(
 ) -> List[str]:
     global client
     cursor = client.cursor()
-    await cursor.execute("SELECT cik FROM financials WHERE %s <% name", (name,))
+    await cursor.execute("SELECT cik FROM financials WHERE %s <%% name", (name,))
     res = await cursor.fetchall()
     if not res:
         raise HTTPException(status_code=404, detail="Company not found")
