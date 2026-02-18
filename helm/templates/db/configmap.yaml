@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-init
+data:
+  init.sql: |
+    CREATE EXTENSION IF NOT EXISTS pg_trgm;
+    CREATE TABLE IF NOT EXISTS financials (
+        accn VARCHAR(255) PRIMARY KEY,
+        cik VARCHAR(10) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        fy INTEGER,
+        fp VARCHAR(2),
+        costs NUMERIC,
+        eps FLOAT,
+        revenues NUMERIC,
+        taxes NUMERIC
+    );
+    CREATE INDEX IF NOT EXISTS idx_cik ON financials(cik);
+    CREATE INDEX IF NOT EXISTS idx_name ON financials(name) USING gin (name gin_trgm_ops);;
