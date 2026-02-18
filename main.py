@@ -75,7 +75,7 @@ async def cik(
     return res
 
 app = Litestar(
-    route_handlers=[data],
+    route_handlers=[data, cik],
     on_startup=[startup],
     on_shutdown=[close],
     debug=True
