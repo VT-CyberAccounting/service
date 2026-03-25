@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: job-archive
+spec:
+  suspend: true
+  schedule: {{ .Values.archiveJob.schedule | quote }}
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: archive
+              image: {{ .Values.archiveJob.repository }}:{{ .Values.archiveJob.tag }}
+              imagePullPolicy: Always
+              env:
+                - name: POSTGRES_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres
+                      key: password
+              volumeMounts:
+                - name: urls
+                  mountPath: /app/config
+
+          volumes:
+            - name: urls
+              configMap:
+                name: archive-load
+                defaultMode: 0755
+          restartPolicy: Never
