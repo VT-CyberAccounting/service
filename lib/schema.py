@@ -10,7 +10,10 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 class AlchemyDriver:
     @classmethod
     def init(cls):
-        cls.engine = create_async_engine(f"postgresql+psycopg://postgres:{getenv('POSTGRES_PASSWORD')}@db:80/postgres")
+        cls.engine = create_async_engine(
+            f"postgresql+psycopg://postgres:{getenv('POSTGRES_PASSWORD')}@db:80/postgres",
+            pool_pre_ping=True,
+        )
 
     @classmethod
     async def close(cls):
