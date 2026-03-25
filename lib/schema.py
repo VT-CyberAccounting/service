@@ -66,7 +66,7 @@ class strf:
         if self.eq is not None:
             conditions.append(column == self.eq)
         if self.contains is not None:
-            conditions.append(column.bool_op('<%')(self.contains))
+            conditions.append(column.bool_op('%>')(self.contains))
         if self.startswith is not None:
             conditions.append(column.startswith(self.startswith))
         if self.endswith is not None:
