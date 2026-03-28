@@ -1,3 +1,4 @@
+import strawberry
 from litestar import Litestar, get
 from typing import *
 
@@ -5,6 +6,8 @@ from litestar.exceptions import HTTPException
 from litestar.params import Parameter
 from psycopg import AsyncConnection, Error
 from os import getenv
+from lib import AlchemyDriver, Query
+from strawberry.litestar import make_graphql_controller
 
 client: AsyncConnection
 
@@ -13,10 +16,17 @@ async def startup():
     client = await AsyncConnection.connect(
         conninfo=f"postgresql://postgres:{getenv('POSTGRES_PASSWORD')}@db:80/postgres"
     )
+    AlchemyDriver.init()
 
 async def close():
     global client
     await client.close()
+    await AlchemyDriver.close()
+
+
+schema = strawberry.Schema(query=Query)
+graphql_controller = make_graphql_controller(schema=schema, path="/graphql", graphql_ide="graphiql")
+
 
 @get("/data")
 async def data(
@@ -75,7 +85,7 @@ async def cik(
     return res
 
 app = Litestar(
-    route_handlers=[data, cik],
+    route_handlers=[data, cik, graphql_controller],
     on_startup=[startup],
     on_shutdown=[close],
     debug=True

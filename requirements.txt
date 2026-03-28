@@ -3,3 +3,6 @@ sniffio
 uvicorn
 httpx
 psycopg[binary]
+sqlalchemy
+strawberry-graphql
+sqlmodel
