@@ -1,6 +1,0 @@
-{{/*apiVersion: v1*/}}
-{{/*kind: ConfigMap*/}}
-{{/*metadata:*/}}
-{{/*  name: csv-load*/}}
-{{/*data:*/}}
-{{/*  sln.csv: {{ .Files.Get "files/sln.csv" | quote }}*/}}
