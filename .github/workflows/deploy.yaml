@@ -41,7 +41,7 @@ jobs:
       - name: teardown
         if: ${{ inputs.teardown }}
         run: |
-          helm uninstall service --namespace dev
+          helm uninstall service --namespace dev || true
           kubectl delete pvc vol-db-0 --namespace dev --ignore-not-found
       - name: deploy
         run: |
