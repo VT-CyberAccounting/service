@@ -53,7 +53,7 @@ jobs:
       - name: Build Push (job)
         uses: docker/build-push-action@v5
         with:
-          context: .jobs/archive
+          context: .jobs/csv
           push: true
           tags: ${{ steps.meta-job.outputs.tags }}
           labels: ${{ steps.meta-job.outputs.labels }}
