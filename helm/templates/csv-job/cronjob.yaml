@@ -21,13 +21,13 @@ spec:
                     secretKeyRef:
                       name: postgres
                       key: password
-              volumeMounts:
-                - name: sln
-                  mountPath: /app/config
+{{/*              volumeMounts:*/}}
+{{/*                - name: sln*/}}
+{{/*                  mountPath: /app/config*/}}
 
-          volumes:
-            - name: sln
-              configMap:
-                name: csv-load
-                defaultMode: 0755
-          restartPolicy: Never
+{{/*          volumes:*/}}
+{{/*            - name: sln*/}}
+{{/*              configMap:*/}}
+{{/*                name: csv-load*/}}
+{{/*                defaultMode: 0755*/}}
+{{/*          restartPolicy: Never*/}}
