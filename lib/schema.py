@@ -1,9 +1,11 @@
 from os import getenv
 from typing import List, Optional
 
+from sqlalchemy import func
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel import SQLModel, Field, select
 import strawberry
+from strawberry.scalars import JSON
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 
@@ -88,6 +90,61 @@ class slnSQL(SQLModel, table=True):
 class slnGQL:
     pass
 
+@strawberry.type
+class slnAggregate:
+    _sub: strawberry.Private[object]
+    _group_col: strawberry.Private[Optional[str]]
+
+    @strawberry.field
+    async def count(self) -> int:
+        query = select(func.count()).select_from(self._sub)
+        async with AsyncSession(AlchemyDriver.engine) as session:
+            return (await session.execute(query)).scalar_one()
+
+    async def _run_agg(self, fn, of: List[str]) -> JSON:
+        for col in of:
+            if not hasattr(slnSQL, col):
+                raise ValueError(f"Invalid aggregate column: {col}")
+        cols = [fn(self._sub.c[col]).label(col) for col in of]
+        if self._group_col:
+            cols.insert(0, self._sub.c[self._group_col].label("key"))
+        query = select(*cols).select_from(self._sub)
+        if self._group_col:
+            query = query.group_by(self._sub.c[self._group_col])
+        async with AsyncSession(AlchemyDriver.engine) as session:
+            rows = (await session.execute(query)).all()
+        if not self._group_col:
+            return {col: float(v) for col, v in zip(of, rows[0]) if v is not None}
+        return [
+            {self._group_col: str(r[0]), **{col: float(v) for col, v in zip(of, r[1:]) if v is not None}}
+            for r in rows
+        ]
+
+    @strawberry.field
+    async def avg(self, of: List[str]) -> JSON:
+        return await self._run_agg(func.avg, of)
+
+    @strawberry.field
+    async def sum(self, of: List[str]) -> JSON:
+        return await self._run_agg(func.sum, of)
+
+    @strawberry.field
+    async def min(self, of: List[str]) -> JSON:
+        return await self._run_agg(func.min, of)
+
+    @strawberry.field
+    async def max(self, of: List[str]) -> JSON:
+        return await self._run_agg(func.max, of)
+
+    @strawberry.field
+    async def stddev(self, of: List[str]) -> JSON:
+        return await self._run_agg(func.stddev, of)
+
+@strawberry.type
+class slnResult:
+    nodes: List[slnGQL]
+    aggregate: slnAggregate
+
 @strawberry.input
 class numf:
     eq: Optional[float] = None
@@ -138,7 +195,10 @@ class Query:
             ticker: Optional[str] = None,
             name: Optional[strf] = None,
             year: Optional[int] = None,
-    ) -> List[slnGQL]:
+            distinct: Optional[str] = None,
+            limit: Optional[int] = None,
+            offset: Optional[int] = None,
+    ) -> slnResult:
         conditions = []
         if id is not None:
             conditions.append(slnSQL.id == id)
@@ -150,8 +210,25 @@ class Query:
             conditions.extend(name.apply(slnSQL.name))
         if year is not None:
             conditions.append(slnSQL.year == year)
-        query = select(slnSQL).limit(100)
+        query = select(slnSQL)
         if len(conditions) > 0:
             query = query.where(*conditions)
+        if distinct is not None:
+            if not hasattr(slnSQL, distinct):
+                raise ValueError(f"Invalid distinct column: {distinct}")
+            column = getattr(slnSQL, distinct)
+            query = query.distinct(column).order_by(column)
+        sub = query.subquery()
+        if offset is not None:
+            query = query.offset(offset)
+        if limit is not None:
+            query = query.limit(limit)
         async with AsyncSession(AlchemyDriver.engine) as session:
-            return (await session.exec(query)).all()
+            nodes = (await session.exec(query)).all()
+            return slnResult(
+                nodes=nodes,
+                aggregate=slnAggregate(
+                    _sub=sub,
+                    _group_col=distinct,
+                ),
+            )
