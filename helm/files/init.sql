@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS raw (
     inventory_last_year NUMERIC NOT NULL,
     stockholders_equity_last_year NUMERIC NOT NULL,
     cost_goods_sold_last_year NUMERIC NOT NULL,
-    common_shares_outstanding_last_year NUMERIC NOT NULL,
+    common_shares_outstanding_last_year NUMERIC NOT NULL
 );
 
 CREATE TYPE industry_type AS ENUM ('Mining', 'Construction', 'Manufacturing', 'Transportation Public Utilities', 'Wholesale Trade', 'Retail Trade', 'Services');
