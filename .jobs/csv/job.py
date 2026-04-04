@@ -3,7 +3,8 @@ import pandas as pd
 import psycopg
 from os import getenv
 
-data = pd.read_csv("/app/config/sln.csv")
+data = pd.read_csv("/app/config/sln.csv", skipinitialspace=True)
+data.columns = data.columns.str.strip()
 pgclient = psycopg.connect(
 	f"postgresql://postgres:{getenv('POSTGRES_PASSWORD')}@db:80/postgres"
 )
@@ -14,11 +15,11 @@ mapping: Dict[str, str] = {
 	"Environmental": "environmental",
 	"Social": "social",
 	"Governance": "governance",
-	"ESG_score": "esg_score",
+	"ESG_score": "esg",
 	"GVKEY": "gvkey",
 	"CIK Number": "cik",
 	"Company Name": "name",
-	"SIC": "sic",
+	"SIC code": "sic",
 	"Current Assets": "current_assets",
 	"Assets": "assets",
 	"Cash": "cash",
@@ -34,12 +35,12 @@ mapping: Dict[str, str] = {
 	"Cost of Goods Sold": "cost_goods_sold",
 	"Dividends - Preferred/Preference": "dividends_pref",
 	"Dividends": "dividends",
-	"Earnings Before Interest Taxes": "earnings_before_interest_taxes",
+	"Earnings Before Interest and Taxes": "earnings_before_interest_taxes",
 	"Earnings Per Share (Basic)": "earnings_per_share_basic",
 	"Net Income (Loss)": "net_income_loss",
-	"Net Income Adjusted for Common Stocks": "net_income_adjusted_common_stocks",
+	"Net Income Adjusted for common stocks": "net_income_adjusted_common_stocks",
 	"Sales/Turnover (Net)": "sales_by_turnover",
-	"Interest Related Expense": "interest_related_expense",
+	"Interest and Related Expense": "interest_related_expense",
 	"Common Shares Outstanding": "common_shares_outstanding",
 	"Total Debt Including Current": "total_debt_including_current",
 	"Price Close - Annual -": "price_closed_annual",
@@ -48,7 +49,7 @@ mapping: Dict[str, str] = {
 	"Net receivables last year": "net_receivables_last_year",
 	"Inventory last year": "inventory_last_year",
 	"Stockholder equity last year": "stockholders_equity_last_year",
-	"Cost of goods sold last year": "cost_goods_sold_last_year",
+	"Cost of Goods Sold last year": "cost_goods_sold_last_year",
 	"Common shares outstanding last year": "common_shares_outstanding_last_year",
 }
 
