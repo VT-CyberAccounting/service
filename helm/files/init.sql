@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS raw (
 
 CREATE TYPE industry_type AS ENUM ('Mining', 'Construction', 'Manufacturing', 'Transportation Public Utilities', 'Wholesale Trade', 'Retail Trade', 'Services');
 
-CREATE VIEW IF NOT EXISTS sln AS (
+CREATE OR REPLACE VIEW sln AS (
     SELECT
         id,
         (current_assets - current_liabilities) AS working_capital,
