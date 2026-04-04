@@ -55,8 +55,10 @@ mapping: Dict[str, str] = {
 
 data = data[list(mapping.keys())]
 data = data.rename(columns=mapping)
+data = data.dropna(how='all')
+data = data.replace(".", None)
 
-records = [tuple(row) for row in data.values]
+records = [tuple(None if pd.isna(v) else v for v in row) for row in data.values]
 
 cols = ", ".join(list(mapping.values()))
 placeholders = ", ".join(["%s"] * len(mapping))
