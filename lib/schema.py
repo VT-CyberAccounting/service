@@ -19,21 +19,73 @@ class AlchemyDriver:
     async def close(cls):
         await cls.engine.dispose()
 
-class financialsSQL(SQLModel, table=True):
-    __tablename__ = "financials"
+class slnSQL(SQLModel, table=True):
+    __tablename__ = "sln"
 
-    accn: str = Field(primary_key=True)
+    id: int = Field(primary_key=True)
+    ticker: str
+    year: int
     cik: str
     name: str
-    fy: int
-    fp: str
-    costs: float
-    eps: float
-    revenues: float
-    taxes: float
+    environmental: Optional[float] = None
+    social: Optional[float] = None
+    governance: Optional[float] = None
+    esg: Optional[float] = None
+    gvkey: Optional[float] = None
+    sic: Optional[float] = None
+    current_assets: Optional[float] = None
+    assets: Optional[float] = None
+    cash: Optional[float] = None
+    inventory: Optional[float] = None
+    current_marketable_securities: Optional[float] = None
+    current_liabilities: Optional[float] = None
+    liabilities: Optional[float] = None
+    property_plant_equipment: Optional[float] = None
+    pref_stock: Optional[float] = None
+    allowance_doubtful_receivables: Optional[float] = None
+    total_receivables: Optional[float] = None
+    stockholders_equity: Optional[float] = None
+    cost_goods_sold: Optional[float] = None
+    dividends_pref: Optional[float] = None
+    dividends: Optional[float] = None
+    earnings_before_interest_taxes: Optional[float] = None
+    earnings_per_share_basic: Optional[float] = None
+    net_income_loss: Optional[float] = None
+    net_income_adjusted_common_stocks: Optional[float] = None
+    sales_by_turnover: Optional[float] = None
+    interest_related_expense: Optional[float] = None
+    common_shares_outstanding: Optional[float] = None
+    total_debt_including_current: Optional[float] = None
+    price_closed_annual: Optional[float] = None
+    net_receivables: Optional[float] = None
+    total_assets_last_year: Optional[float] = None
+    net_receivables_last_year: Optional[float] = None
+    inventory_last_year: Optional[float] = None
+    stockholders_equity_last_year: Optional[float] = None
+    cost_goods_sold_last_year: Optional[float] = None
+    common_shares_outstanding_last_year: Optional[float] = None
+    working_capital: Optional[float] = None
+    current_ratio: Optional[float] = None
+    quick_ratio: Optional[float] = None
+    accounts_receivable_turnover: Optional[float] = None
+    average_days_to_collect_receivables: Optional[float] = None
+    inventory_turnover: Optional[float] = None
+    average_days_to_collect_inventory: Optional[float] = None
+    debt_to_assets: Optional[float] = None
+    debt_to_equity: Optional[float] = None
+    number_of_times_interest_is_earned: Optional[float] = None
+    net_margin: Optional[float] = None
+    asset_turnover_ratio: Optional[float] = None
+    return_on_investment: Optional[float] = None
+    return_on_equity: Optional[float] = None
+    earnings_per_share: Optional[float] = None
+    book_value_per_share: Optional[float] = None
+    price_earnings_ratio: Optional[float] = None
+    dividend_yield: Optional[float] = None
+    industry: Optional[str] = None
 
-@strawberry.experimental.pydantic.type(model=financialsSQL, all_fields=True)
-class financialsGQL:
+@strawberry.experimental.pydantic.type(model=slnSQL, all_fields=True)
+class slnGQL:
     pass
 
 @strawberry.input
@@ -79,38 +131,26 @@ class strf:
 @strawberry.type
 class Query:
     @strawberry.field
-    async def financials(
+    async def sln(
             self,
-            accn: Optional[str] = None,
+            id: Optional[int] = None,
             cik: Optional[str] = None,
+            ticker: Optional[str] = None,
             name: Optional[strf] = None,
-            fy: Optional[numf] = None,
-            fp: Optional[strf] = None,
-            costs: Optional[numf] = None,
-            eps: Optional[numf] = None,
-            revenues: Optional[numf] = None,
-            taxes: Optional[numf] = None,
-    ) -> List[financialsGQL]:
+            year: Optional[int] = None,
+    ) -> List[slnGQL]:
         conditions = []
-        if accn:
-            conditions.append(financialsSQL.accn == accn)
+        if id is not None:
+            conditions.append(slnSQL.id == id)
         if cik:
-            conditions.append(financialsSQL.cik == cik)
+            conditions.append(slnSQL.cik == cik)
+        if ticker:
+            conditions.append(slnSQL.ticker == ticker)
         if name:
-            conditions.extend(name.apply(financialsSQL.name))
-        if fy:
-            conditions.extend(fy.apply(financialsSQL.fy))
-        if fp:
-            conditions.extend(fp.apply(financialsSQL.fp))
-        if costs:
-            conditions.extend(costs.apply(financialsSQL.costs))
-        if eps:
-            conditions.extend(eps.apply(financialsSQL.eps))
-        if revenues:
-            conditions.extend(revenues.apply(financialsSQL.revenues))
-        if taxes:
-            conditions.extend(taxes.apply(financialsSQL.taxes))
-        query = select(financialsSQL).limit(100)
+            conditions.extend(name.apply(slnSQL.name))
+        if year is not None:
+            conditions.append(slnSQL.year == year)
+        query = select(slnSQL).limit(100)
         if len(conditions) > 0:
             query = query.where(*conditions)
         async with AsyncSession(AlchemyDriver.engine) as session:

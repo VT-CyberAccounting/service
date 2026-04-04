@@ -48,7 +48,7 @@ CREATE TYPE industry_type AS ENUM ('Mining', 'Construction', 'Manufacturing', 'T
 
 CREATE OR REPLACE VIEW sln AS (
     SELECT
-        id,
+        *,
         (current_assets - current_liabilities) AS working_capital,
         (current_assets / NULLIF(current_liabilities, 0)) AS current_ratio,
         ((cash + current_marketable_securities + (total_receivables - allowance_doubtful_receivables)) / NULLIF(current_liabilities, 0)) AS quick_ratio,
