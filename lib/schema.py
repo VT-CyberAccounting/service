@@ -228,7 +228,7 @@ class Query:
             return slnResult(
                 nodes=nodes,
                 aggregates=aggregateSet(
-                    sub=sub,
+                    subquery=sub,
                     group_col=distinct,
                 ),
             )
