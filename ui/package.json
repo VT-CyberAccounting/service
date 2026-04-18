@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.2",
+    "graphql-request": "^7.4.0",
     "lucide-react": "^1.8.0",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.4",

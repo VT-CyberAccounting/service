@@ -4,4 +4,13 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  server: {
+    proxy: {
+      '/submission': {
+        target: 'https://cyberacc.cs.vt.edu',
+        changeOrigin: true,
+        secure: true,
+      },
+    },
+  },
 })

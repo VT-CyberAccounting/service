@@ -119,6 +119,36 @@ class SubmissionMutation:
         )
 
     @strawberry.mutation
+    async def update_submission(
+        self,
+        username: str,
+        label: str,
+        new_label: str,
+    ) -> SubmissionGQL:
+        if not new_label.strip():
+            raise ValueError("new_label must be non-empty")
+
+        async with AsyncSession(AlchemyDriver.engine) as session:
+            row = await _find(session, username, label)
+            if row is None:
+                raise ValueError(f"submission '{label}' not found for '{username}'")
+            row.label = new_label
+            session.add(row)
+            try:
+                await session.commit()
+            except IntegrityError:
+                await session.rollback()
+                raise ValueError(f"submission '{new_label}' already exists for '{username}'")
+            await session.refresh(row)
+
+        return SubmissionGQL(
+            id=row.id,
+            username=row.username,
+            label=row.label,
+            created_at=row.created_at,
+        )
+
+    @strawberry.mutation
     async def delete_submission(self, username: str, label: str) -> bool:
         async with AsyncSession(AlchemyDriver.engine) as session:
             row = await _find(session, username, label)

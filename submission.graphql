@@ -20,5 +20,6 @@ type Query {
 
 type Mutation {
   createSubmission(username: String!, label: String!, file: Upload!): Submission!
+  updateSubmission(username: String!, label: String!, newLabel: String!): Submission!
   deleteSubmission(username: String!, label: String!): Boolean!
 }
