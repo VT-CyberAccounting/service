@@ -13,20 +13,6 @@ spec:
       labels:
         app: s3
     spec:
-      initContainers:
-      - name: bucket-init
-        image: minio/mc:latest
-        restartPolicy: Always
-        command: ["/bin/sh", "/scripts/init.sh"]
-        env:
-          - name: MINIO_ROOT_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: password
-                key: minio
-        volumeMounts:
-          - name: scripts
-            mountPath: /scripts
       containers:
       - name: s3
         image: minio/minio:latest
@@ -47,11 +33,6 @@ spec:
         volumeMounts:
         - name: vol
           mountPath: /data
-      volumes:
-        - name: scripts
-          configMap:
-            name: s3-init
-            defaultMode: 0755
 
   volumeClaimTemplates:
   - metadata:

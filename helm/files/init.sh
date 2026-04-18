@@ -1,6 +1,6 @@
 #!/bin/sh
 set -e
-until mc alias set local http://localhost:9000 minio "$MINIO_ROOT_PASSWORD" >/dev/null 2>&1; do
+until mc alias set local http://s3/ minio "$MINIO_ROOT_PASSWORD" >/dev/null 2>&1; do
   echo "waiting for s3..."
   sleep 2
 done
