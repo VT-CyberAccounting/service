@@ -1,6 +1,6 @@
 import { GraphQLClient, gql } from 'graphql-request'
 
-export const client = new GraphQLClient('/submission')
+export const client = new GraphQLClient(`${window.location.origin}/submission`)
 
 export type Submission = {
   id: string
