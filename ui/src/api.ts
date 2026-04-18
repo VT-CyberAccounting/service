@@ -52,6 +52,12 @@ const DELETE_SUBMISSION = gql`
   }
 `
 
+const DOWNLOAD_QUERY = gql`
+  query Download($username: String!, $label: String!) {
+    download(username: $username, label: $label)
+  }
+`
+
 export async function fetchSubmissions(username: string): Promise<Submission[]> {
   const data = await client.request<{ submissions: Submission[] }>(
     SUBMISSIONS_QUERY,
@@ -93,4 +99,15 @@ export async function deleteSubmission(
     { username, label },
   )
   return data.deleteSubmission
+}
+
+export async function downloadUrl(
+  username: string,
+  label: string,
+): Promise<string | null> {
+  const data = await client.request<{ download: string | null }>(
+    DOWNLOAD_QUERY,
+    { username, label },
+  )
+  return data.download
 }

@@ -6,6 +6,8 @@ image:
 ingress:
   enabled: true
   host: "cyberacc.discovery.cs.vt.edu"
+s3:
+  publicUrl: "https://s3.cyberacc.discovery.cs.vt.edu"
 archiveJob:
   schedule: "0 */3 * * *"
   repository: ghcr.io/vt-cyberaccounting/job

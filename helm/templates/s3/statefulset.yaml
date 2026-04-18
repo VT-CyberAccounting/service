@@ -30,6 +30,8 @@ spec:
               secretKeyRef:
                 name: password
                 key: minio
+          - name: MINIO_SERVER_URL
+            value: {{ .Values.s3.publicUrl | quote }}
         volumeMounts:
         - name: vol
           mountPath: /data
