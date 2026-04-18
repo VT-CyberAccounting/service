@@ -1,0 +1,24 @@
+# GraphQL schema for the submission API.
+# Served at /submission (GET serves GraphiQL IDE, POST executes queries/mutations).
+# Uploads use the graphql-multipart-request spec (Upload scalar).
+
+scalar UUID
+scalar DateTime
+scalar Upload
+
+type Submission {
+  id: UUID!
+  username: String!
+  label: String!
+  createdAt: DateTime!
+}
+
+type Query {
+  submissions(username: String!): [Submission!]!
+  download(username: String!, label: String!): String
+}
+
+type Mutation {
+  createSubmission(username: String!, label: String!, file: Upload!): Submission!
+  deleteSubmission(username: String!, label: String!): Boolean!
+}

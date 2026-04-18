@@ -38,3 +38,8 @@ spec:
                 secretKeyRef:
                   name: password
                   key: postgres
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: password
+                  key: minio

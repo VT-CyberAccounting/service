@@ -1,25 +1,13 @@
-from os import getenv
 from typing import List, Optional
 
 from sqlalchemy import func
-from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel import SQLModel, Field, select
 import strawberry
 from strawberry.scalars import JSON
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from .driver import AlchemyDriver
 
-class AlchemyDriver:
-    @classmethod
-    def init(cls):
-        cls.engine = create_async_engine(
-            f"postgresql+psycopg://postgres:{getenv('POSTGRES_PASSWORD')}@db:80/postgres",
-            pool_pre_ping=True,
-        )
-
-    @classmethod
-    async def close(cls):
-        await cls.engine.dispose()
 
 class sln(SQLModel, table=True):
     __tablename__ = "sln"
