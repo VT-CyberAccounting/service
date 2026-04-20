@@ -18,7 +18,7 @@ schema = strawberry.Schema(query=Query)
 submission_schema = strawberry.Schema(query=SubmissionQuery, mutation=SubmissionMutation)
 
 solution_controller = make_graphql_controller(schema=schema, path="/solution", graphql_ide="graphiql")
-submission_controller = make_graphql_controller(schema=submission_schema, path="/submission", graphql_ide="graphiql")
+isubmission_controller = make_graphql_controller(schema=submission_schema, path="/submission", graphql_ide="graphiql", multipart_uploads_enabled=True)
 ui_router = create_static_files_router(path="/", directories=["/dist"], html_mode=True)
 
 app = Litestar(

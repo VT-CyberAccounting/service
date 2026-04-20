@@ -20,7 +20,7 @@ const SUBMISSIONS_QUERY = gql`
   }
 `
 
-const CREATE_SUBMISSION = gql`
+const CREATE_SUBMISSION = `
   mutation CreateSubmission(
     $username: String!
     $label: String!
@@ -71,11 +71,24 @@ export async function createSubmission(
   label: string,
   file: File,
 ): Promise<Submission> {
-  const data = await client.request<{ createSubmission: Submission }>(
-    CREATE_SUBMISSION,
-    { username, label, file },
+  const form = new FormData()
+  form.append(
+    'operations',
+    JSON.stringify({
+      query: CREATE_SUBMISSION,
+      variables: { username, label, file: null },
+    }),
   )
-  return data.createSubmission
+  form.append('map', JSON.stringify({ '0': ['variables.file'] }))
+  form.append('0', file, file.name)
+
+  const res = await fetch(`${window.location.origin}/submission`, {
+    method: 'POST',
+    body: form,
+  })
+  const json = await res.json()
+  if (json.errors?.length) throw new Error(json.errors[0].message)
+  return json.data.createSubmission as Submission
 }
 
 export async function updateSubmission(

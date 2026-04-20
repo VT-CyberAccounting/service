@@ -7,9 +7,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/submission': {
-        target: 'https://cyberacc.cs.vt.edu',
+        target: 'https://cyberacc.discovery.cs.vt.edu',
         changeOrigin: true,
-        secure: true,
+        secure: false,
       },
     },
   },
