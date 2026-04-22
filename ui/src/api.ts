@@ -67,3 +67,30 @@ export async function insertSubmission(
   })
   if (!res.ok) throw new Error(`Upload failed: ${res.status} ${res.statusText}`)
 }
+
+const RENAME_SUBMISSION = gql`
+  mutation RenameSubmission($username: String!, $label: String!, $newLabel: String!) {
+    renameSubmission(username: $username, label: $label, newLabel: $newLabel)
+  }
+`
+
+export async function renameSubmission(
+  username: string,
+  label: string,
+  newLabel: string,
+): Promise<void> {
+  await client.request(RENAME_SUBMISSION, { username, label, newLabel })
+}
+
+const DELETE_SUBMISSION = gql`
+  mutation DeleteSubmission($username: String!, $label: String!) {
+    deleteSubmission(username: $username, label: $label)
+  }
+`
+
+export async function deleteSubmission(
+  username: string,
+  label: string,
+): Promise<void> {
+  await client.request(DELETE_SUBMISSION, { username, label })
+}

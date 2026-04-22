@@ -5,9 +5,11 @@ import { Download, Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   type Submission,
+  deleteSubmission,
   getSubmissionUrl,
   getSubmissions,
   insertSubmission,
+  renameSubmission,
 } from '../api'
 
 export default function Dashboard() {
@@ -96,11 +98,19 @@ export default function Dashboard() {
   const downloadEntry = async (_entry: Submission) => {
     toast.info('Download not wired up yet')
   }
-  const deleteEntry = async (_entry: Submission) => {
-    toast.info('Delete not wired up yet')
+  const deleteEntry = async (entry: Submission) => {
+    if (!username) return
+    try {
+      await deleteSubmission(username, entry.label)
+      toast.success(`Deleted "${entry.label}"`)
+      if (selectedLabel === entry.label) setSelectedLabel(null)
+      await refetch()
+    } catch (err) {
+      toast.error(`Delete failed: ${err instanceof Error ? err.message : String(err)}`)
+    }
   }
   const saveLabel = async () => {
-    if (!selected) return
+    if (!selected || !username) return
     const next = draft.trim()
     if (!next) {
       toast.error('Label cannot be empty')
@@ -111,8 +121,16 @@ export default function Dashboard() {
       return
     }
     setSaving(true)
-    toast.info('Update not wired up yet')
-    setSaving(false)
+    try {
+      await renameSubmission(username, selected.label, next)
+      toast.success(`Renamed to "${next}"`)
+      setSelectedLabel(next)
+      await refetch()
+    } catch (err) {
+      toast.error(`Rename failed: ${err instanceof Error ? err.message : String(err)}`)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const openDialog = () => setUploadOpen(true)

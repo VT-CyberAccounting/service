@@ -88,9 +88,35 @@ class Mutation:
         )
 
     @strawberry.mutation
-    async def updateSubmission(self) -> None:
+    async def renameSubmission(self, username: str, label: str, newLabel: str) -> None:
+        async with AsyncSession(AlchemyDriver.engine) as session:
+            row = (
+                await session.exec(
+                    select(SubmissionClass)
+                    .where(SubmissionClass.username == username)
+                    .where(SubmissionClass.label == label)
+                )
+            ).first()
+            if row is None:
+                return None
+            row.label = newLabel
+            session.add(row)
+            await session.commit()
         return None
 
     @strawberry.mutation
-    async def deleteSubmission(self) -> None:
+    async def deleteSubmission(self, username: str, label: str) -> None:
+        async with AsyncSession(AlchemyDriver.engine) as session:
+            row = (
+                await session.exec(
+                    select(SubmissionClass)
+                    .where(SubmissionClass.username == username)
+                    .where(SubmissionClass.label == label)
+                )
+            ).first()
+            if row is None:
+                return None
+            AlchemyDriver.client.remove_object("submissions", f"{row.id}.csv")
+            await session.delete(row)
+            await session.commit()
         return None
