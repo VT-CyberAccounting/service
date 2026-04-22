@@ -43,3 +43,5 @@ spec:
                 secretKeyRef:
                   name: password
                   key: minio
+            - name: S3_URL
+              value: {{ (urlParse .Values.s3.publicUrl).host | quote }}
