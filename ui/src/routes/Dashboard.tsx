@@ -5,11 +5,9 @@ import { Download, Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   type Submission,
-  createSubmission,
-  deleteSubmission,
-  downloadUrl,
-  fetchSubmissions,
-  updateSubmission,
+  getSubmissionUrl,
+  getSubmissions,
+  insertSubmission,
 } from '../api'
 
 export default function Dashboard() {
@@ -23,25 +21,26 @@ export default function Dashboard() {
 
   const [entries, setEntries] = useState<Submission[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selectedLabel, setSelectedLabel] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
   const [focusTick, setFocusTick] = useState(0)
   const [saving, setSaving] = useState(false)
   const [panelUrl, setPanelUrl] = useState<string | null>(null)
   const [panelUrlLoading, setPanelUrlLoading] = useState(false)
 
-  const selected = entries.find((e) => e.id === selectedId) ?? null
+  const selected = entries.find((e) => e.label === selectedLabel) ?? null
   const lastSelected = useRef<Submission | null>(null)
   if (selected) lastSelected.current = selected
   const panelEntry = selected ?? lastSelected.current
 
   const refetch = useCallback(async () => {
     if (!username) return
+    setLoading(true)
     try {
-      const data = await fetchSubmissions(username)
+      const data = await getSubmissions(username, 10)
       setEntries(data)
     } catch (err) {
-      toast.error(`Failed to load submissions: ${errMsg(err)}`)
+      toast.error(`Failed to load submissions: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
       setLoading(false)
     }
@@ -63,7 +62,7 @@ export default function Dashboard() {
     let cancelled = false
     setPanelUrlLoading(true)
     setPanelUrl(null)
-    downloadUrl(username, selected.label)
+    getSubmissionUrl(username, selected.label)
       .then((url) => {
         if (cancelled) return
         if (!url) {
@@ -73,7 +72,9 @@ export default function Dashboard() {
         setPanelUrl(url)
       })
       .catch((err) => {
-        if (!cancelled) toast.error(`Failed to get URL: ${errMsg(err)}`)
+        if (!cancelled) {
+          toast.error(`Failed to get URL: ${err instanceof Error ? err.message : String(err)}`)
+        }
       })
       .finally(() => {
         if (!cancelled) setPanelUrlLoading(false)
@@ -87,42 +88,19 @@ export default function Dashboard() {
     if (focusTick > 0) labelInputRef.current?.focus()
   }, [focusTick])
 
-  const openEntry = (entry: Submission) => setSelectedId(entry.id)
+  const openEntry = (entry: Submission) => setSelectedLabel(entry.label)
   const editEntry = (entry: Submission) => {
-    setSelectedId(entry.id)
+    setSelectedLabel(entry.label)
     setFocusTick((t) => t + 1)
   }
-  const downloadEntry = async (entry: Submission) => {
-    if (!username) return
-    try {
-      const url = await downloadUrl(username, entry.label)
-      if (!url) {
-        toast.error('No download URL returned')
-        return
-      }
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `${entry.label}.csv`
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-    } catch (err) {
-      toast.error(`Download failed: ${errMsg(err)}`)
-    }
+  const downloadEntry = async (_entry: Submission) => {
+    toast.info('Download not wired up yet')
   }
-  const deleteEntry = async (entry: Submission) => {
-    if (!username) return
-    try {
-      await deleteSubmission(username, entry.label)
-      if (selectedId === entry.id) setSelectedId(null)
-      toast.success(`Deleted "${entry.label}"`)
-      await refetch()
-    } catch (err) {
-      toast.error(`Delete failed: ${errMsg(err)}`)
-    }
+  const deleteEntry = async (_entry: Submission) => {
+    toast.info('Delete not wired up yet')
   }
   const saveLabel = async () => {
-    if (!selected || !username) return
+    if (!selected) return
     const next = draft.trim()
     if (!next) {
       toast.error('Label cannot be empty')
@@ -133,15 +111,8 @@ export default function Dashboard() {
       return
     }
     setSaving(true)
-    try {
-      await updateSubmission(username, selected.label, next)
-      toast.success('Label updated')
-      await refetch()
-    } catch (err) {
-      toast.error(`Update failed: ${errMsg(err)}`)
-    } finally {
-      setSaving(false)
-    }
+    toast.info('Update not wired up yet')
+    setSaving(false)
   }
 
   const openDialog = () => setUploadOpen(true)
@@ -165,12 +136,12 @@ export default function Dashboard() {
     }
     setSubmitting(true)
     try {
-      await createSubmission(username, trimmed, file)
+      await insertSubmission(username, trimmed, file)
       toast.success(`Uploaded "${trimmed}"`)
       closeDialog()
       await refetch()
     } catch (err) {
-      toast.error(`Upload failed: ${errMsg(err)}`)
+      toast.error(`Upload failed: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
       setSubmitting(false)
     }
@@ -197,10 +168,10 @@ export default function Dashboard() {
       ) : (
         <ul className="mt-6 flex flex-col gap-2">
           {entries.map((entry) => (
-            <li key={entry.id}>
+            <li key={entry.label}>
               <div
                 className={`flex items-center gap-2 px-4 py-3 rounded border transition ${
-                  selectedId === entry.id
+                  selectedLabel === entry.label
                     ? 'border-violet-500 bg-violet-50'
                     : 'border-neutral-200 hover:bg-neutral-50'
                 }`}
@@ -240,7 +211,7 @@ export default function Dashboard() {
 
       <div
         className={`fixed inset-0 z-40 ${selected ? '' : 'pointer-events-none'}`}
-        onClick={() => setSelectedId(null)}
+        onClick={() => setSelectedLabel(null)}
       >
         <aside
           onClick={(e) => e.stopPropagation()}
@@ -301,15 +272,22 @@ export default function Dashboard() {
                 className="px-3 py-2 rounded border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-violet-500"
               />
             </label>
-            <label className="flex flex-col gap-1 text-sm text-neutral-700">
-              CSV file
+            <div className="flex flex-col gap-1 text-sm text-neutral-700">
+              CSV File:
               <input
+                id="csv-input"
                 type="file"
                 accept=".csv,text/csv"
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                className="text-sm"
+                className="hidden"
               />
-            </label>
+              <label
+                htmlFor="csv-input"
+                className="px-3 py-2 rounded border border-neutral-300 cursor-pointer hover:bg-neutral-50"
+              >
+                {file ? file.name : 'Click to choose'}
+              </label>
+            </div>
             <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
@@ -331,9 +309,4 @@ export default function Dashboard() {
       )}
     </main>
   )
-}
-
-function errMsg(err: unknown): string {
-  if (err instanceof Error) return err.message
-  return String(err)
 }

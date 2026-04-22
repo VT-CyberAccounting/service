@@ -1,5 +1,6 @@
 from os import getenv
 
+from minio import Minio
 from sqlalchemy.ext.asyncio import create_async_engine
 
 
@@ -9,6 +10,12 @@ class AlchemyDriver:
         cls.engine = create_async_engine(
             f"postgresql+psycopg://postgres:{getenv('POSTGRES_PASSWORD')}@db:80/postgres",
             pool_pre_ping=True,
+        )
+        cls.client = Minio(
+            "s3.cyberacc.discovery.cs.vt.edu",
+            access_key="minio",
+            secret_key=getenv("MINIO_PASSWORD"),
+            secure=True,
         )
 
     @classmethod
