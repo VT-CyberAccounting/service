@@ -14,13 +14,14 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 RUN apk add libpq
 
+RUN mkdir /app
+
+COPY . /app
+COPY --from=ui-builder /web/dist /dist
+
 WORKDIR /app
 
-COPY . .
-
 RUN uv sync --locked
-
-COPY --from=ui-builder /web/dist /dist
 
 EXPOSE 8000
 
