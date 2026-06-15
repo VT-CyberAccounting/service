@@ -1,6 +1,6 @@
 FROM node:22-alpine AS ui-builder
 
-WORKDIR /ui
+WORKDIR /web
 COPY web/package*.json ./
 RUN npm ci
 COPY web/ ./
