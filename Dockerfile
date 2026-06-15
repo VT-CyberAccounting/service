@@ -1,9 +1,8 @@
 FROM node:22-alpine AS ui-builder
 
 WORKDIR /web
-COPY web/package*.json ./
-RUN npm ci
 COPY web/ ./
+RUN npm ci
 RUN npm run build
 
 FROM python:3.12-alpine
@@ -14,14 +13,12 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 RUN apk add libpq
 
-RUN mkdir /app
-
 COPY . /app
 COPY --from=ui-builder /web/dist /dist
 
 WORKDIR /app
 
-RUN uv sync --locked
+RUN uv sync --locked --no-dev
 
 EXPOSE 8000
 
