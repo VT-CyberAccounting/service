@@ -19,9 +19,9 @@ RUN mkdir /app
 COPY . /app
 COPY --from=ui-builder /web/dist /dist
 
-RUN uv sync --locked
-
 WORKDIR /app
+
+RUN uv sync --locked
 
 EXPOSE 8000
 
