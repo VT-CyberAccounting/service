@@ -10,6 +10,6 @@ WORKDIR /app
 
 COPY . .
 
-RUN uv sync --locked
+RUN uv sync --no-dev
 
 CMD ["python3", "job.py"]

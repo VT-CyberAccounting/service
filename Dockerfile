@@ -18,7 +18,7 @@ COPY --from=ui-builder /web/dist /dist
 
 WORKDIR /app
 
-RUN uv sync --locked --no-dev
+RUN uv sync --no-dev
 
 EXPOSE 8000
 
