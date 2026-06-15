@@ -6,12 +6,10 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 RUN apk add libpq
 
-RUN mkdir /app
+WORKDIR /app
 
-COPY . /app
+COPY . .
 
 RUN uv sync --locked
-
-WORKDIR /app
 
 CMD ["python3", "job.py"]
