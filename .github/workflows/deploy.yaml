@@ -41,12 +41,12 @@ jobs:
       - name: teardown
         if: ${{ inputs.teardown }}
         run: |
-          helm uninstall service --namespace dev || true
-          kubectl delete pvc vol-db-0 --namespace dev --ignore-not-found
+          helm uninstall service --namespace cyberacc || true
+          kubectl delete pvc vol-db-0 --namespace cyberacc --ignore-not-found
       - name: deploy
         run: |
           helm upgrade --install service ./helm \
-            --namespace dev \
+            --namespace cyberacc \
             --set-string image.tag=${{ env.TAG }} \
             --timeout 2m0s \
             --atomic \
