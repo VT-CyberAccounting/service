@@ -5,7 +5,7 @@ COPY web/ ./
 RUN npm ci
 RUN npm run build
 
-FROM python:3.12-alpine
+FROM python:3.14-alpine
 
 LABEL authors="Samartha Madhyastha"
 
@@ -22,4 +22,4 @@ RUN uv sync --no-dev
 
 EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

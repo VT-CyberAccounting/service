@@ -1,4 +1,4 @@
-FROM python:3.12-alpine
+FROM python:3.14-alpine
 
 LABEL authors="Samartha Madhyastha"
 
@@ -12,4 +12,4 @@ COPY . .
 
 RUN uv sync --no-dev
 
-CMD ["python3", "job.py"]
+CMD ["uv", "run", "python3", "job.py"]
