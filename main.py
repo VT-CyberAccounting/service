@@ -6,10 +6,13 @@ from litestar.response import Redirect
 from strawberry.litestar import make_graphql_controller
 from authlib.integrations.starlette_client import OAuth
 from starlette.responses import RedirectResponse
+from litestar.middleware.session.client_side import CookieBackendConfig
 
 from lib import AlchemyDriver, Query, SubmissionQuery, SubmissionMutation
 
 oauth = OAuth()
+
+session_config = CookieBackendConfig(secret=os.urandom(16))
 
 async def startup():
     AlchemyDriver.init()
@@ -75,5 +78,6 @@ app = Litestar(
     route_handlers=[login, callback, token, solution_controller, submission_controller, ui_router],
     on_startup=[startup],
     on_shutdown=[close],
+    middleware=[session_config.middleware],
     debug=True,
 )
