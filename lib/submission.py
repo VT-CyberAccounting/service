@@ -76,7 +76,8 @@ class Query:
 @strawberry.type
 class Mutation:
     @strawberry.mutation
-    async def insertSubmission(self, username: str, label: str) -> str:
+    async def insertSubmission(self, info: strawberry.Info, label: str) -> str:
+        username = info.context["email"]
         row = SubmissionClass(username=username, label=label)
         async with AsyncSession(AlchemyDriver.engine) as session:
             session.add(row)
@@ -89,7 +90,8 @@ class Mutation:
         )
 
     @strawberry.mutation
-    async def renameSubmission(self, username: str, label: str, newLabel: str) -> None:
+    async def renameSubmission(self, info: strawberry.Info, label: str, newLabel: str) -> None:
+        username = info.context["email"]
         async with AsyncSession(AlchemyDriver.engine) as session:
             row = (
                 await session.exec(
@@ -106,7 +108,8 @@ class Mutation:
         return None
 
     @strawberry.mutation
-    async def deleteSubmission(self, username: str, label: str) -> None:
+    async def deleteSubmission(self, info: strawberry.Info, label: str) -> None:
+        username = info.context["email"]
         async with AsyncSession(AlchemyDriver.engine) as session:
             row = (
                 await session.exec(

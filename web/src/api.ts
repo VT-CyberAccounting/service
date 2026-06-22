@@ -8,58 +8,53 @@ export type Submission = {
 }
 
 const GET_SUBMISSIONS = gql`
-  query GetSubmissions($username: String!, $limit: Int!) {
-    getSubmission(username: $username, limit: $limit) {
+  query GetSubmissions($limit: Int!) {
+    getSubmission(limit: $limit) {
       label
       createdAt
     }
   }
 `
 
-export async function getSubmissions(
-  username: string,
-  limit = 10,
-): Promise<Submission[]> {
+export async function getSubmissions(limit = 10): Promise<Submission[]> {
   const data = await client.request<{ getSubmission: Submission[] }>(
     GET_SUBMISSIONS,
-    { username, limit },
+    { limit },
   )
   return data.getSubmission
 }
 
 const GET_SUBMISSION_URL = gql`
-  query GetSubmissionUrl($username: String!, $label: String!) {
-    getSubmission(username: $username, label: $label, limit: 1) {
+  query GetSubmissionUrl($label: String!) {
+    getSubmission(label: $label, limit: 1) {
       url
     }
   }
 `
 
 export async function getSubmissionUrl(
-  username: string,
   label: string,
 ): Promise<string | null> {
   const data = await client.request<{ getSubmission: { url: string | null }[] }>(
     GET_SUBMISSION_URL,
-    { username, label },
+    { label },
   )
   return data.getSubmission[0]?.url ?? null
 }
 
 const INSERT_SUBMISSION = gql`
-  mutation InsertSubmission($username: String!, $label: String!) {
-    insertSubmission(username: $username, label: $label)
+  mutation InsertSubmission($label: String!) {
+    insertSubmission(label: $label)
   }
 `
 
 export async function insertSubmission(
-  username: string,
   label: string,
   file: File,
 ): Promise<void> {
   const data = await client.request<{ insertSubmission: string }>(
     INSERT_SUBMISSION,
-    { username, label },
+    { label },
   )
   const res = await fetch(data.insertSubmission, {
     method: 'PUT',
@@ -69,28 +64,24 @@ export async function insertSubmission(
 }
 
 const RENAME_SUBMISSION = gql`
-  mutation RenameSubmission($username: String!, $label: String!, $newLabel: String!) {
-    renameSubmission(username: $username, label: $label, newLabel: $newLabel)
+  mutation RenameSubmission($label: String!, $newLabel: String!) {
+    renameSubmission(label: $label, newLabel: $newLabel)
   }
 `
 
 export async function renameSubmission(
-  username: string,
   label: string,
   newLabel: string,
 ): Promise<void> {
-  await client.request(RENAME_SUBMISSION, { username, label, newLabel })
+  await client.request(RENAME_SUBMISSION, { label, newLabel })
 }
 
 const DELETE_SUBMISSION = gql`
-  mutation DeleteSubmission($username: String!, $label: String!) {
-    deleteSubmission(username: $username, label: $label)
+  mutation DeleteSubmission($label: String!) {
+    deleteSubmission(label: $label)
   }
 `
 
-export async function deleteSubmission(
-  username: string,
-  label: string,
-): Promise<void> {
-  await client.request(DELETE_SUBMISSION, { username, label })
+export async function deleteSubmission(label: string): Promise<void> {
+  await client.request(DELETE_SUBMISSION, { label })
 }

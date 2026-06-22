@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useParams } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
 import { Download, Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -13,7 +12,6 @@ import {
 } from '../api'
 
 export default function Dashboard() {
-  const { username } = useParams<{ username: string }>()
   const labelInputRef = useRef<HTMLInputElement>(null)
 
   const [uploadOpen, setUploadOpen] = useState(false)
@@ -36,17 +34,16 @@ export default function Dashboard() {
   const panelEntry = selected ?? lastSelected.current
 
   const refetch = useCallback(async () => {
-    if (!username) return
     setLoading(true)
     try {
-      const data = await getSubmissions(username, 10)
+      const data = await getSubmissions(10)
       setEntries(data)
     } catch (err) {
       toast.error(`Failed to load submissions: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
       setLoading(false)
     }
-  }, [username])
+  }, [])
 
   useEffect(() => {
     refetch()
@@ -57,14 +54,14 @@ export default function Dashboard() {
   }, [selected])
 
   useEffect(() => {
-    if (!selected || !username) {
+    if (!selected) {
       setPanelUrl(null)
       return
     }
     let cancelled = false
     setPanelUrlLoading(true)
     setPanelUrl(null)
-    getSubmissionUrl(username, selected.label)
+    getSubmissionUrl(selected.label)
       .then((url) => {
         if (cancelled) return
         if (!url) {
@@ -84,7 +81,7 @@ export default function Dashboard() {
     return () => {
       cancelled = true
     }
-  }, [selected, username])
+  }, [selected])
 
   useEffect(() => {
     if (focusTick > 0) labelInputRef.current?.focus()
@@ -99,9 +96,8 @@ export default function Dashboard() {
     toast.info('Download not wired up yet')
   }
   const deleteEntry = async (entry: Submission) => {
-    if (!username) return
     try {
-      await deleteSubmission(username, entry.label)
+      await deleteSubmission(entry.label)
       toast.success(`Deleted "${entry.label}"`)
       if (selectedLabel === entry.label) setSelectedLabel(null)
       await refetch()
@@ -110,7 +106,7 @@ export default function Dashboard() {
     }
   }
   const saveLabel = async () => {
-    if (!selected || !username) return
+    if (!selected) return
     const next = draft.trim()
     if (!next) {
       toast.error('Label cannot be empty')
@@ -122,7 +118,7 @@ export default function Dashboard() {
     }
     setSaving(true)
     try {
-      await renameSubmission(username, selected.label, next)
+      await renameSubmission(selected.label, next)
       toast.success(`Renamed to "${next}"`)
       setSelectedLabel(next)
       await refetch()
@@ -142,7 +138,6 @@ export default function Dashboard() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!username) return
     const trimmed = label.trim()
     if (!trimmed) {
       toast.error('Label is required')
@@ -154,7 +149,7 @@ export default function Dashboard() {
     }
     setSubmitting(true)
     try {
-      await insertSubmission(username, trimmed, file)
+      await insertSubmission(trimmed, file)
       toast.success(`Uploaded "${trimmed}"`)
       closeDialog()
       await refetch()
@@ -169,7 +164,7 @@ export default function Dashboard() {
     <main className="min-h-screen p-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-neutral-900">
-          {username}'s dashboard
+          Dashboard
         </h1>
         <button
           onClick={openDialog}

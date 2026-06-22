@@ -40,7 +40,7 @@ async def callback(request: Request) -> Redirect:
     except Exception:
         return Redirect("/login")
 
-    response = Redirect("/")
+    response = Redirect("/dashboard")
     response.set_cookie(
         key="access_token",
         value=token.get("access_token"),
@@ -65,7 +65,7 @@ async def email(request: Request) -> str:
 
 @get("/live/token")
 async def token(email: str) -> str:
-    return f"dummy token for {email}"
+    return f"token for {email}: "
 
 async def graphql_context(email: str) -> dict:
     return {"email": email}
