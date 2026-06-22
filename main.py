@@ -5,6 +5,7 @@ from litestar.static_files import create_static_files_router
 from litestar.response import Redirect
 from strawberry.litestar import make_graphql_controller
 from authlib.integrations.starlette_client import OAuth
+from starlette.responses import RedirectResponse
 
 from lib import AlchemyDriver, Query, SubmissionQuery, SubmissionMutation
 
@@ -24,12 +25,12 @@ async def close():
     await AlchemyDriver.close()
 
 @get("/login")
-async def login(request: Request):
+async def login(request: Request) -> RedirectResponse:
     redirect_uri = f"{request.base_url}auth/callback"
     return await oauth.google.authorize_redirect(request, redirect_uri=redirect_uri)
 
 @get("/auth/callback")
-async def callback(request: Request):
+async def callback(request: Request) -> Redirect:
     try:
         token = await oauth.google.authorize_access_token(request)
     except Exception:
@@ -46,7 +47,7 @@ async def callback(request: Request):
     return response
 
 @get("/live/token")
-async def token(request: Request):
+async def token(request: Request) -> str | Redirect:
     access_token = request.cookies.get("access_token")
     if not access_token:
         return Redirect("/login")
