@@ -32,19 +32,20 @@ class Query:
     async def getSubmission(
         self,
         info: strawberry.Info,
-        username: Optional[str] = None,
         label: Optional[str] = None,
         limit: Optional[int] = None,
         offset: Optional[int] = None,
     ) -> List[Submission]:
+        # username is no longer a client argument; it comes from the
+        # authenticated identity injected via the GraphQL context.
+        username = info.context["email"]
         process_url: bool = any(
             f.name == "url"
             for sel in info.selected_fields
             for f in sel.selections
         )
         query = select(SubmissionClass)
-        if username is not None:
-            query = query.where(SubmissionClass.username == username)
+        query = query.where(SubmissionClass.username == username)
         if label is not None:
             query = query.where(SubmissionClass.label == label)
         query = query.order_by(SubmissionClass.created_at.desc())

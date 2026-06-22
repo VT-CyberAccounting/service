@@ -1,6 +1,7 @@
 import os
 import strawberry
 from litestar import Litestar, get, Request
+from litestar.exceptions import NotAuthorizedException
 from litestar.static_files import create_static_files_router
 from litestar.response import Redirect
 from strawberry.litestar import make_graphql_controller
@@ -49,33 +50,41 @@ async def callback(request: Request) -> Redirect:
     )
     return response
 
-@get("/live/token")
-async def token(request: Request) -> str | Redirect:
+async def email(request: Request) -> str:
     access_token = request.cookies.get("access_token")
     if not access_token:
-        return Redirect("/login")
+        raise NotAuthorizedException()
+    user = await oauth.google.get(
+        "https://www.googleapis.com/oauth2/v1/userinfo",
+        token={"access_token": access_token, "token_type": "Bearer"}
+    )
+    if user.is_success:
+        return user.json().get("email", "Email not found")
+    else:
+        raise NotAuthorizedException()
 
-    try:
-        user = await oauth.google.get(
-            "https://www.googleapis.com/oauth2/v1/userinfo",
-            token={"access_token": access_token, "token_type": "Bearer"}
-        )
-        if user.is_success:
-            return "dummy token"
-    except Exception:
-        pass
+@get("/live/token")
+async def token(email: str) -> str:
+    return f"dummy token for {email}"
 
-    return Redirect("/login")
+async def graphql_context(email: str) -> dict:
+    return {"email": email}
 
 solution_schema = strawberry.Schema(query=Query)
 submission_schema = strawberry.Schema(query=SubmissionQuery, mutation=SubmissionMutation)
 
 solution_controller = make_graphql_controller(schema=solution_schema, path="/solution", graphql_ide="graphiql")
-submission_controller = make_graphql_controller(schema=submission_schema, path="/submission", graphql_ide="graphiql")
+submission_controller = make_graphql_controller(
+    schema=submission_schema,
+    path="/submission",
+    graphql_ide="graphiql",
+    context_getter=graphql_context,
+)
 ui_router = create_static_files_router(path="/", directories=["/dist"], html_mode=True)
 
 app = Litestar(
     route_handlers=[login, callback, token, solution_controller, submission_controller, ui_router],
+    dependencies={"email": email},
     on_startup=[startup],
     on_shutdown=[close],
     middleware=[session_config.middleware],
