@@ -63,8 +63,6 @@ async def token(request: Request):
 
     return Redirect("/login")
 
-
-
 solution_schema = strawberry.Schema(query=Query)
 submission_schema = strawberry.Schema(query=SubmissionQuery, mutation=SubmissionMutation)
 
@@ -73,7 +71,7 @@ submission_controller = make_graphql_controller(schema=submission_schema, path="
 ui_router = create_static_files_router(path="/", directories=["/dist"], html_mode=True)
 
 app = Litestar(
-    route_handlers=[solution_controller, submission_controller, ui_router],
+    route_handlers=[login, callback, token, solution_controller, submission_controller, ui_router],
     on_startup=[startup],
     on_shutdown=[close],
     debug=True,
