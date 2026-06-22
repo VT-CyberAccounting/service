@@ -60,7 +60,7 @@ async def token(request: Request) -> str | Redirect:
             "https://www.googleapis.com/oauth2/v1/userinfo",
             token={"access_token": access_token, "token_type": "Bearer"}
         )
-        if user.ok:
+        if user.is_success:
             return "dummy token"
     except Exception:
         pass
