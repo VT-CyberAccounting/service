@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     proxy: {
-      '/submission': {
+      '/api': {
         target: 'https://cyberacc.discovery.cs.vt.edu',
         changeOrigin: true,
         secure: false,
