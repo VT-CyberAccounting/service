@@ -1,5 +1,8 @@
 import os
+import time
 
+from authlib.jose import jwt
+from authlib.jose.errors import ExpiredTokenError, JoseError
 from litestar import Router, Request, get
 from litestar.exceptions import NotAuthorizedException
 from litestar.response import Redirect
@@ -8,13 +11,26 @@ from starlette.responses import RedirectResponse
 
 oauth = OAuth()
 
+
+class MissingTokenException(NotAuthorizedException):
+    detail = "No authentication token was provided."
+
+
+class InvalidTokenException(NotAuthorizedException):
+    detail = "The authentication token is malformed or invalid."
+
+
+class ExpiredTokenException(NotAuthorizedException):
+    detail = "The authentication token has expired."
+
+
 def register_oauth() -> None:
     oauth.register(
         name='google',
         client_id=os.getenv('GOOGLE_CLIENT_ID'),
         client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
         server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
-        client_kwargs={'scope': 'email'},
+        client_kwargs={'scope': 'openid email'},
     )
 
 
@@ -31,10 +47,24 @@ async def callback(request: Request) -> Redirect:
     except Exception:
         return Redirect("/auth/login")
 
+    # authorize_access_token verifies Google's id_token (signature, issuer,
+    # audience, nonce) and exposes the claims as userinfo. Trust it once here,
+    # then issue our own session token signed with JWT_SECRET.
+    user_email = token.get("userinfo", {}).get("email")
+    if not user_email:
+        return Redirect("/auth/login")
+
+    now = int(time.time())
+    session = jwt.encode(
+        {"alg": "HS256"},
+        {"email": user_email, "iat": now, "exp": now + 24 * 60 * 60},
+        os.getenv("JWT_SECRET"),
+    ).decode("ascii")
+
     response = Redirect("/dashboard")
     response.set_cookie(
-        key="access_token",
-        value=token.get("access_token"),
+        key="session",
+        value=session,
         httponly=True,
         secure=True,
         samesite="Lax",
@@ -43,17 +73,28 @@ async def callback(request: Request) -> Redirect:
 
 
 async def email(request: Request) -> str:
-    access_token = request.cookies.get("access_token")
-    if not access_token:
-        raise NotAuthorizedException()
-    user = await oauth.google.get(
-        "https://www.googleapis.com/oauth2/v1/userinfo",
-        token={"access_token": access_token, "token_type": "Bearer"}
-    )
-    if user.is_success:
-        return user.json().get("email", "Email not found")
-    else:
-        raise NotAuthorizedException()
+    session = request.cookies.get("session")
+    if not session:
+        raise MissingTokenException()
+
+    try:
+        claims = jwt.decode(
+            session,
+            os.getenv("JWT_SECRET"),
+            claims_options={"exp": {"essential": True}},
+        )
+        claims.validate()
+    except ExpiredTokenError:
+        raise ExpiredTokenException()
+    except (JoseError, ValueError, KeyError):
+        # bad signature or malformed token
+        raise InvalidTokenException()
+
+    user_email = claims.get("email")
+    if not user_email:
+        raise InvalidTokenException()
+
+    return user_email
 
 
 router = Router(path="/auth", route_handlers=[login, callback])
