@@ -3,13 +3,14 @@ import os
 from litestar import Litestar
 from litestar.middleware.session.client_side import CookieBackendConfig
 
-from lib import AlchemyDriver, auth_router, api_router, register_oauth
+from lib import AlchemyDriver, auth_router, api_router, register_oauth, api_startup
 
 session_config = CookieBackendConfig(secret=os.urandom(16))
 
 async def startup():
     AlchemyDriver.init()
     register_oauth()
+    await api_startup()
 
 async def close():
     await AlchemyDriver.close()
