@@ -55,7 +55,7 @@ async def callback(request: Request) -> Redirect:
         return Redirect("/auth/login")
 
     now = int(time.time())
-    session = jwt.encode(
+    auth_token = jwt.encode(
         {"alg": "HS256"},
         {"email": user_email, "iat": now, "exp": now + 24 * 60 * 60},
         os.getenv("JWT_SECRET"),
@@ -63,8 +63,8 @@ async def callback(request: Request) -> Redirect:
 
     response = Redirect("/dashboard")
     response.set_cookie(
-        key="session",
-        value=session,
+        key="auth_token",
+        value=auth_token,
         httponly=True,
         secure=True,
         samesite="Lax",
@@ -73,13 +73,13 @@ async def callback(request: Request) -> Redirect:
 
 
 async def email(request: Request) -> str:
-    session = request.cookies.get("session")
-    if not session:
+    auth_token = request.cookies.get("auth_token")
+    if not auth_token:
         raise MissingTokenException()
 
     try:
         claims = jwt.decode(
-            session,
+            auth_token,
             os.getenv("JWT_SECRET"),
             claims_options={"exp": {"essential": True}},
         )
