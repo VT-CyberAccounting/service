@@ -24,7 +24,7 @@ async def startup():
 @get("/livetoken")
 async def token(email: str) -> str:
     now = datetime.now(tz=timezone.utc)
-    window = now + timedelta(hours=24)
+    window = now + timedelta(hours=20)
     result = await genai_client.aio.auth_tokens.create(
         config={
             "uses": 1000,

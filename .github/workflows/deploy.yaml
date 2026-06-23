@@ -13,22 +13,29 @@ on:
       teardown:
         type: boolean
         description: 'teardown (db cleared)'
+  workflow_run:
+    workflows: ["Push"]
+    types:
+      - completed
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # for workflow_run, only deploy when the Push build actually succeeded
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     permissions:
       contents: read
     steps:
       - name: tag check
         run: |
-          GIT_SHA="$(echo ${{ github.sha }} | cut -c1-7)"
+          SHA="${{ github.event.workflow_run.head_sha || github.sha }}"
+          GIT_SHA="$(echo $SHA | cut -c1-7)"
           INP_SHA="${{ inputs.image }}"
-          echo "TAG=${INP_SHA:-$GIT_SHA}" >> $GITHUB_ENV         
+          echo "TAG=${INP_SHA:-$GIT_SHA}" >> $GITHUB_ENV
 
       - name: checkout
         uses: actions/checkout@v5
         with:
-          ref: ${{ inputs.helm || github.sha }}
+          ref: ${{ inputs.helm || github.event.workflow_run.head_sha || github.sha }}
       - name: kubectl
         uses: azure/setup-kubectl@v3
       - name: helm
