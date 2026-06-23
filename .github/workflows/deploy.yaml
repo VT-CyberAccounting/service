@@ -48,6 +48,7 @@ jobs:
           helm upgrade --install service ./helm \
             --namespace cyberacc \
             --set-string image.tag=${{ env.TAG }} \
+            --set-string web.tag=${{ env.TAG }} \
             --timeout 2m0s \
             --atomic \
             --wait \
