@@ -60,3 +60,8 @@ spec:
                 secretKeyRef:
                   name: password
                   key: jwtsecret
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: password
+                  key: gemini
