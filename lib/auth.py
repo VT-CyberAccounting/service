@@ -53,10 +53,22 @@ async def callback(request: Request) -> Redirect:
         os.getenv("JWT_SECRET"),
     ).decode("ascii")
 
-    response = Redirect("/dashboard")
+    response = Redirect("/")
     response.set_cookie(
         key="auth_token",
         value=auth_token,
+        httponly=True,
+        secure=True,
+        samesite="Lax",
+    )
+    return response
+
+
+@get("/logout")
+async def logout(request: Request) -> Redirect:
+    response = Redirect("/auth/login")
+    response.delete_cookie(
+        key="auth_token",
         httponly=True,
         secure=True,
         samesite="Lax",
@@ -88,4 +100,4 @@ async def email(request: Request) -> str:
     return user_email
 
 
-router = Router(path="/auth", route_handlers=[login, callback])
+router = Router(path="/auth", route_handlers=[login, callback, logout])

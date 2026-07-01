@@ -21,6 +21,11 @@ async def startup():
     )
 
 
+@get("/me")
+async def me(email: str) -> str:
+    return email
+
+
 @get("/livetoken")
 async def token(email: str) -> str:
     now = datetime.now(tz=timezone.utc)
@@ -56,6 +61,6 @@ submission_controller = make_graphql_controller(
 
 router = Router(
     path="/api",
-    route_handlers=[token, solution_controller, submission_controller],
+    route_handlers=[me, token, solution_controller, submission_controller],
     dependencies={"email": email},
 )

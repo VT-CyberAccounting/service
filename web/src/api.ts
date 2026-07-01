@@ -2,6 +2,13 @@ import { GraphQLClient, gql } from 'graphql-request'
 
 export const client = new GraphQLClient(`${window.location.origin}/api/submission`)
 
+export async function isAuthenticated(): Promise<boolean> {
+  const res = await fetch(`${window.location.origin}/api/me`, {
+    credentials: 'include',
+  })
+  return res.ok
+}
+
 export type Submission = {
   label: string
   createdAt: string

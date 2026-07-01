@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
-import { Download, Pencil, Trash2 } from 'lucide-react'
+import { Download, KeyRound, LogOut, Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   type Submission,
@@ -129,6 +129,13 @@ export default function Dashboard() {
     }
   }
 
+  const logout = () => {
+    window.location.href = '/auth/logout'
+  }
+  const registerDevice = () => {
+    // TODO: tie up with login mechanism for external devices
+  }
+
   const openDialog = () => setUploadOpen(true)
   const closeDialog = () => {
     setUploadOpen(false)
@@ -166,12 +173,28 @@ export default function Dashboard() {
         <h1 className="text-2xl font-semibold text-neutral-900">
           Dashboard
         </h1>
-        <button
-          onClick={openDialog}
-          className="px-3 py-2 rounded bg-violet-600 text-white font-medium hover:bg-violet-700"
-        >
-          Upload
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={openDialog}
+            className="px-3 py-2 rounded bg-violet-600 text-white font-medium hover:bg-violet-700"
+          >
+            Upload
+          </button>
+          <button
+            onClick={registerDevice}
+            aria-label="Register device"
+            className="p-2 rounded border border-neutral-300 text-neutral-700 hover:bg-neutral-50"
+          >
+            <KeyRound size={16} />
+          </button>
+          <button
+            onClick={logout}
+            className="flex items-center gap-1.5 px-3 py-2 rounded border border-neutral-300 text-neutral-700 font-medium hover:bg-neutral-50"
+          >
+            <LogOut size={16} />
+            Logout
+          </button>
+        </div>
       </div>
 
       {loading ? (
