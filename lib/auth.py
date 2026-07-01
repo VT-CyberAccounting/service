@@ -69,9 +69,6 @@ async def logout(request: Request) -> Redirect:
     response = Redirect("/auth/login")
     response.delete_cookie(
         key="auth_token",
-        httponly=True,
-        secure=True,
-        samesite="Lax",
     )
     return response
 
