@@ -41,6 +41,25 @@ jobs:
           cache-from: type=gha,scope=app
           cache-to: type=gha,mode=max,scope=app
 
+      - name: Docker Meta (web)
+        id: meta-web
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/web
+          tags: |
+            type=sha, format=short, prefix=
+            type=raw, value=latest, enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build Push (web)
+        uses: docker/build-push-action@v5
+        with:
+          context: web
+          push: true
+          tags: ${{ steps.meta-web.outputs.tags }}
+          labels: ${{ steps.meta-web.outputs.labels }}
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
+
       - name: Docker Meta (job)
         id: meta-job
         uses: docker/metadata-action@v5
@@ -53,7 +72,7 @@ jobs:
       - name: Build Push (job)
         uses: docker/build-push-action@v5
         with:
-          context: .jobs/archive
+          context: jobs/csv
           push: true
           tags: ${{ steps.meta-job.outputs.tags }}
           labels: ${{ steps.meta-job.outputs.labels }}

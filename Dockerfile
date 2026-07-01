@@ -1,17 +1,17 @@
-FROM python:3.12-alpine
+FROM python:3.14-alpine
 
 LABEL authors="Samartha Madhyastha"
 
-RUN apk add libpq
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-RUN mkdir /app
+RUN apk add libpq
 
 COPY . /app
 
-RUN pip install -r /app/requirements.txt
-
 WORKDIR /app
+
+RUN uv sync --no-dev
 
 EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]

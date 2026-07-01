@@ -7,17 +7,32 @@ metadata:
     app: {{ .Release.Name }}
   annotations:
     nginx.ingress.kubernetes.io/whitelist-source-range: 0.0.0.0/0,::/0
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
 spec:
   ingressClassName: "nginx"
   rules:
     - host: {{ .Values.ingress.host }}
       http:
         paths:
-          - path: /
+          - path: /auth
             pathType: Prefix
             backend:
               service:
                 name: {{ .Release.Name }}
+                port:
+                  number: 80
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Release.Name }}
+                port:
+                  number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web
                 port:
                   number: 80
 {{- end }}
