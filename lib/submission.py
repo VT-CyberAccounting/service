@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, timedelta
 from typing import List, Optional
 from uuid import UUID, uuid4
@@ -9,6 +10,11 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from .driver import AlchemyDriver
 
+
+def cleanse(label: str) -> str:
+    label = re.sub(r"[\x00-\x1f\x7f]", "", label)
+    label = re.sub(r'[\\/";]', "", label)
+    return label.strip()
 
 class SubmissionClass(SQLModel, table=True):
     __tablename__ = "submissions"
@@ -36,8 +42,6 @@ class Query:
         limit: Optional[int] = None,
         offset: Optional[int] = None,
     ) -> List[Submission]:
-        # username is no longer a client argument; it comes from the
-        # authenticated identity injected via the GraphQL context.
         username = info.context["email"]
         process_url: bool = any(
             f.name == "url"
@@ -63,6 +67,9 @@ class Query:
                         "submissions",
                         f"{r.id}.csv",
                         expires=timedelta(minutes=5),
+                        response_headers={
+                            "response-content-disposition": f"attachment; filename={r.label}.csv",
+                        }
                     )
                     if process_url
                     else None
@@ -78,6 +85,7 @@ class Mutation:
     @strawberry.mutation
     async def insertSubmission(self, info: strawberry.Info, label: str) -> str:
         username = info.context["email"]
+        label = cleanse(label)
         row = SubmissionClass(username=username, label=label)
         async with AsyncSession(AlchemyDriver.engine) as session:
             session.add(row)
@@ -102,7 +110,7 @@ class Mutation:
             ).first()
             if row is None:
                 return None
-            row.label = newLabel
+            row.label = cleanse(newLabel)
             session.add(row)
             await session.commit()
         return None
