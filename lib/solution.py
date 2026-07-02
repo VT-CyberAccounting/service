@@ -6,7 +6,7 @@ import strawberry
 from strawberry.scalars import JSON
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from .driver import AlchemyDriver
+from .driver import Driver
 
 
 class sln(SQLModel, table=True):
@@ -86,7 +86,7 @@ class aggregateSet:
     @strawberry.field
     async def count(self) -> int:
         query = select(func.count()).select_from(self.subquery)
-        async with AsyncSession(AlchemyDriver.engine) as session:
+        async with AsyncSession(Driver.engine) as session:
             return (await session.execute(query)).scalar_one()
 
     async def run_agg(self, fn, of: List[str]) -> JSON:
@@ -99,7 +99,7 @@ class aggregateSet:
         query = select(*cols).select_from(self.subquery)
         if self.group_col:
             query = query.group_by(self.subquery.c[self.group_col])
-        async with AsyncSession(AlchemyDriver.engine) as session:
+        async with AsyncSession(Driver.engine) as session:
             rows = (await session.execute(query)).all()
         if not self.group_col:
             return {col: float(v) for col, v in zip(of, rows[0]) if v is not None}
@@ -211,7 +211,7 @@ class Query:
             query = query.offset(offset)
         if limit is not None:
             query = query.limit(limit)
-        async with AsyncSession(AlchemyDriver.engine) as session:
+        async with AsyncSession(Driver.engine) as session:
             nodes = (await session.exec(query)).all()
             return slnResult(
                 nodes=nodes,

@@ -1,15 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
-import { Download, KeyRound, LogOut, Pencil, Trash2 } from 'lucide-react'
+import { Check, Download, KeyRound, Loader2, LogOut, Pencil, Trash2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import {
+  type DeviceStatus,
   type Submission,
+  approveDevice,
+  createDevicePairing,
   deleteSubmission,
+  getDeviceStatus,
   getSubmissionUrl,
   getSubmissions,
   insertSubmission,
   renameSubmission,
 } from '../api'
+
+type DevicePhase = 'loading' | DeviceStatus | 'error'
 
 export default function Dashboard() {
   const labelInputRef = useRef<HTMLInputElement>(null)
@@ -27,6 +33,12 @@ export default function Dashboard() {
   const [saving, setSaving] = useState(false)
   const [panelUrl, setPanelUrl] = useState<string | null>(null)
   const [panelUrlLoading, setPanelUrlLoading] = useState(false)
+
+  const [deviceOpen, setDeviceOpen] = useState(false)
+  const [pairingToken, setPairingToken] = useState<string | null>(null)
+  const [devicePhase, setDevicePhase] = useState<DevicePhase>('loading')
+  const [deviceCode, setDeviceCode] = useState('')
+  const [approving, setApproving] = useState(false)
 
   const selected = entries.find((e) => e.label === selectedLabel) ?? null
   const lastSelected = useRef<Submission | null>(null)
@@ -87,6 +99,26 @@ export default function Dashboard() {
     if (focusTick > 0) labelInputRef.current?.focus()
   }, [focusTick])
 
+  useEffect(() => {
+    if (!deviceOpen || !pairingToken) return
+    if (devicePhase === 'delivered' || devicePhase === 'error') return
+    let cancelled = false
+    const poll = async () => {
+      try {
+        const status = await getDeviceStatus(pairingToken)
+        if (!cancelled) setDevicePhase((prev) => (prev === 'error' ? prev : status))
+      } catch {
+        if (!cancelled) setDevicePhase('error')
+      }
+    }
+    poll()
+    const id = setInterval(poll, 1000)
+    return () => {
+      cancelled = true
+      clearInterval(id)
+    }
+  }, [deviceOpen, pairingToken, devicePhase])
+
   const openEntry = (entry: Submission) => setSelectedLabel(entry.label)
   const editEntry = (entry: Submission) => {
     setSelectedLabel(entry.label)
@@ -132,8 +164,45 @@ export default function Dashboard() {
   const logout = () => {
     window.location.href = '/auth/logout'
   }
-  const registerDevice = () => {
-    // TODO: tie up with login mechanism for external devices
+  const registerDevice = async () => {
+    setDeviceOpen(true)
+    setDevicePhase('loading')
+    setPairingToken(null)
+    setDeviceCode('')
+    try {
+      const token = await createDevicePairing()
+      setPairingToken(token)
+      setDevicePhase('initiated')
+    } catch (err) {
+      setDevicePhase('error')
+      toast.error(`Failed to start pairing: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }
+
+  const closeDeviceDialog = () => {
+    setDeviceOpen(false)
+    setPairingToken(null)
+    setDevicePhase('loading')
+    setDeviceCode('')
+  }
+
+  const submitCode = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!pairingToken) return
+    const code = deviceCode.trim()
+    if (code.length !== 6) {
+      toast.error('Enter the 6-digit code shown on the headset')
+      return
+    }
+    setApproving(true)
+    try {
+      await approveDevice(pairingToken, code)
+      setDevicePhase('approved')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : String(err))
+    } finally {
+      setApproving(false)
+    }
   }
 
   const openDialog = () => setUploadOpen(true)
@@ -341,6 +410,77 @@ export default function Dashboard() {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {deviceOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 flex items-center justify-center"
+          onClick={closeDeviceDialog}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-96 flex flex-col gap-4 p-6 bg-white rounded-lg shadow-xl"
+          >
+            <h2 className="text-lg font-semibold text-neutral-900">Register device</h2>
+            <div className="h-[260px] flex flex-col items-center justify-center gap-3 text-center">
+              {devicePhase === 'loading' && (
+                <Loader2 className="animate-spin text-violet-600" size={48} />
+              )}
+              {devicePhase === 'initiated' && pairingToken && (
+                <>
+                  <QRCodeSVG value={pairingToken} size={220} />
+                  <p className="text-sm text-neutral-500">Scan this with the headset</p>
+                </>
+              )}
+              {devicePhase === 'redeemed' && (
+                <form onSubmit={submitCode} className="flex flex-col items-center gap-3">
+                  <p className="text-sm text-neutral-600">
+                    Enter the 6-digit code shown on the headset
+                  </p>
+                  <input
+                    autoFocus
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={deviceCode}
+                    onChange={(e) => setDeviceCode(e.target.value.replace(/\D/g, ''))}
+                    className="w-44 text-center text-2xl tracking-[0.4em] px-3 py-2 rounded border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  />
+                  <button
+                    type="submit"
+                    disabled={approving}
+                    className="px-4 py-2 rounded bg-violet-600 text-white font-medium hover:bg-violet-700 disabled:opacity-50"
+                  >
+                    {approving ? 'Approving...' : 'Approve'}
+                  </button>
+                </form>
+              )}
+              {devicePhase === 'approved' && (
+                <>
+                  <Loader2 className="animate-spin text-violet-600" size={48} />
+                  <p className="text-sm text-neutral-500">Waiting for the headset to finish...</p>
+                </>
+              )}
+              {devicePhase === 'delivered' && (
+                <>
+                  <Check className="text-green-600" size={64} />
+                  <p className="text-sm text-neutral-600">Device paired</p>
+                </>
+              )}
+              {devicePhase === 'error' && (
+                <>
+                  <X className="text-red-600" size={64} />
+                  <p className="text-sm text-neutral-600">Pairing failed or expired</p>
+                </>
+              )}
+            </div>
+            <button
+              onClick={closeDeviceDialog}
+              className="self-end px-3 py-2 rounded border border-neutral-300 text-neutral-700 hover:bg-neutral-50"
+            >
+              {devicePhase === 'delivered' ? 'Done' : 'Close'}
+            </button>
+          </div>
         </div>
       )}
     </main>

@@ -92,3 +92,38 @@ const DELETE_SUBMISSION = gql`
 export async function deleteSubmission(label: string): Promise<void> {
   await client.request(DELETE_SUBMISSION, { label })
 }
+
+export type DeviceStatus = 'initiated' | 'redeemed' | 'approved' | 'delivered'
+
+export async function createDevicePairing(): Promise<string> {
+  const res = await fetch(`${window.location.origin}/auth/device`, {
+    method: 'POST',
+    credentials: 'include',
+  })
+  if (!res.ok) throw new Error(`Failed to start pairing: ${res.status} ${res.statusText}`)
+  const data = (await res.json()) as { token: string }
+  return data.token
+}
+
+export async function getDeviceStatus(pairingToken: string): Promise<DeviceStatus> {
+  const res = await fetch(
+    `${window.location.origin}/auth/device/status?pairing_token=${encodeURIComponent(pairingToken)}`,
+    { credentials: 'include' },
+  )
+  if (!res.ok) throw new Error(`Status check failed: ${res.status} ${res.statusText}`)
+  const data = (await res.json()) as { status: DeviceStatus }
+  return data.status
+}
+
+export async function approveDevice(pairingToken: string, code: string): Promise<void> {
+  const res = await fetch(
+    `${window.location.origin}/auth/device/approve?pairing_token=${encodeURIComponent(
+      pairingToken,
+    )}&code=${encodeURIComponent(code)}`,
+    { method: 'POST', credentials: 'include' },
+  )
+  if (!res.ok) {
+    const detail = (await res.json().catch(() => null)) as { detail?: string } | null
+    throw new Error(detail?.detail ?? `Approve failed: ${res.status} ${res.statusText}`)
+  }
+}

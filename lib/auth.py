@@ -1,13 +1,17 @@
 import os
+import secrets
 import time
 
+from authlib.integrations.starlette_client import OAuth
 from authlib.jose import jwt
 from authlib.jose.errors import ExpiredTokenError, JoseError
-from litestar import Router, Request, get
-from litestar.exceptions import NotAuthorizedException
-from litestar.response import Redirect
-from authlib.integrations.starlette_client import OAuth
+from litestar import Router, Request, get, post
+from litestar.exceptions import HTTPException, NotAuthorizedException, NotFoundException, TooManyRequestsException
+from litestar.response import Redirect, Response
+from litestar.status_codes import HTTP_202_ACCEPTED, HTTP_409_CONFLICT
 from starlette.responses import RedirectResponse
+
+from .driver import Driver
 
 oauth = OAuth()
 
@@ -19,6 +23,19 @@ class InvalidTokenException(NotAuthorizedException):
 
 class ExpiredTokenException(NotAuthorizedException):
     detail = "The authentication token has expired."
+
+class InvalidDeviceTokenException(NotFoundException):
+    detail = "The device pairing token is invalid, expired, or already used."
+
+class InvalidDeviceCodeException(NotFoundException):
+    detail = "The device code is invalid or expired."
+
+class TooManyDeviceRetriesException(TooManyRequestsException):
+    detail = "Too many failed approval attempts. The pairing token has been revoked."
+
+class DeviceAlreadyApprovedException(HTTPException):
+    status_code = HTTP_409_CONFLICT
+    detail = "This pairing request has already been approved."
 
 def register_oauth() -> None:
     oauth.register(
@@ -97,4 +114,68 @@ async def email(request: Request) -> str:
     return user_email
 
 
-router = Router(path="/auth", route_handlers=[login, callback, logout])
+@post("/device")
+async def device(email: str) -> dict:
+    pairing_token = secrets.token_urlsafe(32)
+    await Driver.redis.hset(f"device:{pairing_token}", mapping={"email": email, "status": "initiated"})
+    await Driver.redis.expire(f"device:{pairing_token}", 120)
+    return {"token": pairing_token}
+
+
+@post("/device/redeem")
+async def redeem(pairing_token: str) -> dict:
+    key = f"device:{pairing_token}"
+    if await Driver.redis.hget(key, "status") != "initiated":
+        await Driver.redis.delete(key)
+        raise InvalidDeviceTokenException()
+    code = f"{secrets.randbelow(1000000):06d}"
+    await Driver.redis.hset(key, mapping={"status": "redeemed", "code": code})
+    return {"code": code}
+
+
+@post("/device/approve")
+async def approve(email: str, pairing_token: str, code: str) -> Response:
+    key = f"device:{pairing_token}"
+    record = await Driver.redis.hgetall(key)
+    if record.get("status") == "approved" and record.get("email") == email:
+        raise DeviceAlreadyApprovedException()
+    if record.get("status") != "redeemed" or record.get("email") != email:
+        await Driver.redis.delete(key)
+        raise InvalidDeviceTokenException()
+    if code != record.get("code"):
+        if await Driver.redis.hincrby(key, "retries", 1) >= 5:
+            await Driver.redis.delete(key)
+            raise TooManyDeviceRetriesException()
+        raise InvalidDeviceCodeException()
+    await Driver.redis.hset(key, "status", "approved")
+    return Response(content=None, status_code=HTTP_202_ACCEPTED)
+
+
+@get("/device/status")
+async def status(pairing_token: str) -> dict:
+    record_status = await Driver.redis.hget(f"device:{pairing_token}", "status")
+    if record_status is None:
+        raise InvalidDeviceTokenException()
+    return {"status": record_status}
+
+
+@get("/device/token")
+async def token(pairing_token: str) -> Response:
+    key = f"device:{pairing_token}"
+    if (await status(pairing_token))["status"] != "approved":
+        return Response(content=None, status_code=HTTP_202_ACCEPTED)
+    now = int(time.time())
+    auth_token = jwt.encode(
+        {"alg": "HS256"},
+        {"email": await Driver.redis.hget(key, "email"), "iat": now, "exp": now + 7 * 24 * 60 * 60},
+        os.getenv("JWT_SECRET"),
+    ).decode("ascii")
+    await Driver.redis.hset(key, "status", "delivered")
+    return Response(content={"token": auth_token})
+
+
+router = Router(
+    path="/auth",
+    route_handlers=[login, callback, logout, device, redeem, approve, status, token],
+    dependencies={"email": email},
+)

@@ -8,7 +8,7 @@ from sqlmodel import SQLModel, Field, select
 import strawberry
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from .driver import AlchemyDriver
+from .driver import Driver
 
 
 def cleanse(label: str) -> str:
@@ -57,13 +57,13 @@ class Query:
             query = query.offset(offset)
         if limit is not None:
             query = query.limit(limit)
-        async with AsyncSession(AlchemyDriver.engine) as session:
+        async with AsyncSession(Driver.engine) as session:
             rows = (await session.exec(query)).all()
         return [
             Submission(
                 label=r.label,
                 url=(
-                    AlchemyDriver.client.presigned_get_object(
+                    Driver.client.presigned_get_object(
                         "submissions",
                         f"{r.id}.csv",
                         expires=timedelta(minutes=5),
@@ -87,11 +87,11 @@ class Mutation:
         username = info.context["email"]
         label = cleanse(label)
         row = SubmissionClass(username=username, label=label)
-        async with AsyncSession(AlchemyDriver.engine) as session:
+        async with AsyncSession(Driver.engine) as session:
             session.add(row)
             await session.commit()
             await session.refresh(row)
-        return AlchemyDriver.client.presigned_put_object(
+        return Driver.client.presigned_put_object(
             "submissions",
             f"{row.id}.csv",
             expires=timedelta(minutes=5),
@@ -100,7 +100,7 @@ class Mutation:
     @strawberry.mutation
     async def renameSubmission(self, info: strawberry.Info, label: str, newLabel: str) -> None:
         username = info.context["email"]
-        async with AsyncSession(AlchemyDriver.engine) as session:
+        async with AsyncSession(Driver.engine) as session:
             row = (
                 await session.exec(
                     select(SubmissionClass)
@@ -118,7 +118,7 @@ class Mutation:
     @strawberry.mutation
     async def deleteSubmission(self, info: strawberry.Info, label: str) -> None:
         username = info.context["email"]
-        async with AsyncSession(AlchemyDriver.engine) as session:
+        async with AsyncSession(Driver.engine) as session:
             row = (
                 await session.exec(
                     select(SubmissionClass)
@@ -128,7 +128,7 @@ class Mutation:
             ).first()
             if row is None:
                 return None
-            AlchemyDriver.client.remove_object("submissions", f"{row.id}.csv")
+            Driver.client.remove_object("submissions", f"{row.id}.csv")
             await session.delete(row)
             await session.commit()
         return None
