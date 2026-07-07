@@ -65,3 +65,5 @@ spec:
                 secretKeyRef:
                   name: password
                   key: gemini
+            - name: LIVE_TOKEN_EXPIRY
+              value: {{ .Values.liveTokenExpiry | quote }}

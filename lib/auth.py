@@ -178,7 +178,7 @@ async def status(pairing_token: str) -> dict:
 @get("/device/token")
 async def token(pairing_token: str) -> Response:
     key = f"device:{pairing_token}"
-    if (await status(pairing_token))["status"] != "approved":
+    if await Driver.redis.hget(key, "status") != "approved":
         return Response(content=None, status_code=HTTP_202_ACCEPTED)
     now = int(time.time())
     auth_token = jwt.encode(

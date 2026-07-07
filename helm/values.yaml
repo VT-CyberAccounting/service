@@ -11,6 +11,7 @@ web:
 ingress:
   enabled: true
   host: "cyberacc.discovery.cs.vt.edu"
+liveTokenExpiry: 2
 s3:
   publicUrl: "https://s3.discovery.cs.vt.edu"
 archiveJob:
