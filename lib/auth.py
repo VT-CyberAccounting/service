@@ -15,13 +15,24 @@ from .driver import Driver
 
 oauth = OAuth()
 
-class MissingTokenException(NotAuthorizedException):
+class CodedAuthException(NotAuthorizedException):
+    """401 with a stable machine-readable ``code`` in the response body's ``extra``."""
+    code: str = "unauthorized"
+
+    def __init__(self, *args, **kwargs) -> None:
+        kwargs.setdefault("extra", {"code": self.code})
+        super().__init__(*args, **kwargs)
+
+class MissingTokenException(CodedAuthException):
+    code = "missing_token"
     detail = "No authentication token was provided."
 
-class InvalidTokenException(NotAuthorizedException):
+class InvalidTokenException(CodedAuthException):
+    code = "invalid_token"
     detail = "The authentication token is malformed or invalid."
 
-class ExpiredTokenException(NotAuthorizedException):
+class ExpiredTokenException(CodedAuthException):
+    code = "expired_token"
     detail = "The authentication token has expired."
 
 class InvalidDeviceTokenException(NotFoundException):
@@ -114,6 +125,11 @@ async def email(request: Request) -> str:
     return user_email
 
 
+@get("/whoami")
+async def whoami(email: str) -> str:
+    return email
+
+
 @post("/device")
 async def device(email: str) -> dict:
     pairing_token = secrets.token_urlsafe(32)
@@ -176,6 +192,6 @@ async def token(pairing_token: str) -> Response:
 
 router = Router(
     path="/auth",
-    route_handlers=[login, callback, logout, device, redeem, approve, status, token],
+    route_handlers=[login, callback, logout, whoami, device, redeem, approve, status, token],
     dependencies={"email": email},
 )

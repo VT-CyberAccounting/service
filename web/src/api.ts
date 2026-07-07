@@ -3,7 +3,7 @@ import { GraphQLClient, gql } from 'graphql-request'
 export const client = new GraphQLClient(`${window.location.origin}/api/submission`)
 
 export async function isAuthenticated(): Promise<boolean> {
-  const res = await fetch(`${window.location.origin}/api/me`, {
+  const res = await fetch(`${window.location.origin}/auth/whoami`, {
     credentials: 'include',
   })
   return res.ok
