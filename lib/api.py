@@ -45,7 +45,7 @@ solution_controller = make_graphql_controller(
     schema=solution_schema,
     path="/solution",
     graphql_ide="graphiql",
-    context_getter=graphql_context,
+    # context_getter=graphql_context,
 )
 submission_controller = make_graphql_controller(
     schema=submission_schema,
